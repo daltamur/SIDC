@@ -54,7 +54,7 @@ object Main{
         //just to get what the parse error is
         val expr=new full_expression_parser(exprVal)
         expr.parseS()
-        runner.main(args)
+        Main.main(args)
         }else{
         System.out.print(strResult)
         }
