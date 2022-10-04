@@ -3,7 +3,7 @@ import grammarClasses.full_expression_parser
 
 import java.util.Scanner
 
-object runner{
+object Main{
         //make our wolfram kernel link
         System.mapLibraryName("JLinkNativeLibrary")
         System.load("/usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/SystemFiles/Libraries/Linux-x86-64/libJLinkNativeLibrary.so")
@@ -86,12 +86,12 @@ object runner{
         }
 
         println("Done computing")
-        runner.main(args)
+        Main.main(args)
         }
         catch{
         case e:Exception=>
         println("Something went wrong: "+e.getMessage+e.printStackTrace())
-        runner.main(args)
+        Main.main(args)
         }
         }
         }
