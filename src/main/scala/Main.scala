@@ -1,6 +1,5 @@
 import com.wolfram.jlink.{KernelLink, MathLinkException}
 import grammarClasses.full_expression_parser
-
 import java.util.Scanner
 
 object Main{
