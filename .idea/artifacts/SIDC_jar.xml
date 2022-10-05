@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="SIDC:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SIDC_jar</output-path>
+    <root id="archive" name="SIDC.jar">
+      <element id="module-output" name="SIDC-build" />
+      <element id="module-output" name="SIDC" />
+      <element id="extracted-dir" path="$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.9/scala-library-2.13.9.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="/usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/JLink.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
