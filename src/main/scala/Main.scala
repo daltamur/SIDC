@@ -62,7 +62,7 @@ object Main{
                         case e:MathLinkException=>println(e.getMessage)
                 }
 
-                val expr=new full_expression_parser(strResult)
+                val expr=new full_expression_parser(exprVal)
                 val x=expr.parseS()
                 println(x.getString)
                 println(x)
