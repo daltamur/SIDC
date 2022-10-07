@@ -195,6 +195,10 @@ case class T(var l: F, var r: Option[TE]) extends S {
               //println(currentNumber)
               this.r.get.l.checkForMoreProducts(currentNumber+1)
 
+            case '/' =>
+              //println(currentNumber)
+              this.r.get.l.checkForMoreProducts(currentNumber + 1)
+
             case _ =>
               //println(currentNumber)
               this.r.get.l.checkForMoreProducts(currentNumber)
@@ -214,7 +218,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
       //our l node is a constant
       case _:Const =>
         r.get.l.differentiate(ml)
-        differntiationVal = l.asInstanceOf[Const].getString() + "*" + r.get.l.differntiationVal
+        differntiationVal = "(" + l.asInstanceOf[Const].getString() + ")*(" + r.get.l.differntiationVal + ")"
 
       //for all other things, we're going to be applying the product rule
       case _ =>
@@ -223,7 +227,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
             l.differentiate(ml)
             r.get.l.differentiate(ml)
             //later on, we will check the type of the operator for if we have to apply the general product rule or general quotient rule
-            differntiationVal = "(("+l.getString() + "*" + r.get.l.differntiationVal + ")+(" + l.getDifferentiationVal + "*" + r.get.l.getString+"))"
+            differntiationVal = "((("+l.getString() + ")*(" + r.get.l.differntiationVal + "))+((" + l.getDifferentiationVal + ")*(" + r.get.l.getString+")))"
 
           case '/' =>
             //for every other type, we apply the general product rule
@@ -233,7 +237,8 @@ case class T(var l: F, var r: Option[TE]) extends S {
             val reParse = new full_expression_parser(invertedDivisorString)
             val finalInvertedExpression = reParse.parseT()
             this.l.differentiate(ml)
-            finalInvertedExpression.r = Some(TE(this.r.get.l, this.r.get.operation))
+            finalInvertedExpression.r = Some(TE(T(this.r.get.l.r.get.l.l, None), this.r.get.l.r.get.operation))
+            finalInvertedExpression.differentiate(ml)
             differntiationVal = "((" + this.l.getString() + ")*(" + finalInvertedExpression.getDifferentiationVal + ")     +     " + "(" + this.l.getDifferentiationVal + ")*(" + finalInvertedExpression.getString + "))"
 
         }
@@ -396,7 +401,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
             this.l.differentiate(ml)
             value.l.l.differentiate(ml)
             if (value.l.l.getDifferentiationVal != null && this.l.getDifferentiationVal != null) {
-              differntiationVal = "((" + this.l.getDifferentiationVal + ")*(" + value.l.getString + "))+((" + this.l.getString() + ")*(" + value.l.l.getDifferentiationVal + "))"
+              differntiationVal = "(" + this.l.getDifferentiationVal + ")*(" + value.l.getString + ")+(" + this.l.getString() + ")*(" + value.l.l.getDifferentiationVal + ")"
             }else{
               differntiationVal = null
             }
