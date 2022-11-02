@@ -48,7 +48,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
                     r.l.l.getParamVal match {
                       case Right(rightValue) =>
                         val multiplicationVal = leftValue * rightValue
-                        integrationVal = multiplicationVal + "x"
+                        integrationVal = multiplicationVal + "*x"
                     }
                 }
 
@@ -56,10 +56,15 @@ case class T(var l: F, var r: Option[TE]) extends S {
                 //so we have something like 5*x, so all we're going to do is divide the constant by 2 and slap an x on the end.
                 l.getParamVal match {
                   case Right(leftValue) =>
-                    val newCoefficient = leftValue / 2.0
+                    var newCoefficient:String = ""
+                    if(leftValue%1 == 0) {
+                      newCoefficient = leftValue .asInstanceOf[Int]+"/"+ 2
+                    }else{
+                      newCoefficient = leftValue +"/"+ 2
+                    }
                     r.l.l.getParamVal match {
                       case Left(variableLetter) =>
-                        integrationVal = newCoefficient + variableLetter + "^2"
+                        integrationVal = "("+newCoefficient + ")" + variableLetter + "^2"
                     }
                 }
 
@@ -74,9 +79,18 @@ case class T(var l: F, var r: Option[TE]) extends S {
                       case _: Const =>
                         val exponent = fexpVal.r.asInstanceOf[Const]
                         val multiplier = l.asInstanceOf[Const]
-                        val newExponent = exponent.v + 1.0
-                        val newMultiplier = multiplier.v / newExponent
-                        integrationVal = newMultiplier + base.n + "^" + newExponent
+                        var newExponent = exponent.v + 1.0
+                        var newMultiplier: String = ""
+                        if(multiplier.v%1==0 && newExponent%1==0) {
+                          newMultiplier = "(" + multiplier.v.asInstanceOf[Int] + "/" + newExponent.asInstanceOf[Int] + ")"
+                        }else{
+                          newMultiplier = "(" + multiplier.v + "/" + newExponent + ")"
+                        }
+                        if (newExponent % 1 == 0) {
+                          integrationVal = newMultiplier + base.n + "^" + newExponent.asInstanceOf[Int]
+                        }else{
+                          integrationVal = newMultiplier + base.n + "^" + newExponent
+                        }
                     }
                 }
             }
@@ -106,6 +120,9 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
        case _: FExp =>
          getNestedUVals(currentNode.l.asInstanceOf[FExp].l)
+         if(currentNode.l.asInstanceOf[FExp].r.isInstanceOf[FExp]){
+           println("U value at: "+currentNode.l.asInstanceOf[FExp].r.getString())
+         }
          getNestedUVals(currentNode.l.asInstanceOf[FExp].r)
          checkTExtension(currentNode.r)
 
@@ -124,7 +141,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
           case Right(value) => getPossibleUValues(value.l.l)
         }
 
-      case _ => println("Nested expression finished")
+      case _ => //println("Nested expression finished")
     }
   }
 
@@ -132,8 +149,27 @@ case class T(var l: F, var r: Option[TE]) extends S {
     currentNode match {
       case Some(value) => getPossibleUValues(value.l)
 
-      case _ => println("No further U's here")
+      case _ => //println("No further U's here")
     }
+  }
+
+   def checkIfPossibleSubstitutionRule(curTerm: T): Boolean = {
+    //if an expression cannot be broken down to merely
+     curTerm.l match {
+       //left value is a constant, skip over it and check all the other terms
+       case Const(_) =>
+         curTerm.r match {
+           case Some(value) => checkIfPossibleSubstitutionRule(value.l)
+           case _ => false
+         }
+       //every other case, so long as there is multiplication or division happening, there is the posisbility of the substitution rule
+       case _ =>
+         curTerm.r match {
+           case Some(_) => true
+           case _ => false
+         }
+
+     }
   }
 
 
@@ -141,46 +177,49 @@ case class T(var l: F, var r: Option[TE]) extends S {
     //grammarClasses.F->'('grammarClasses.E')'|var|const|grammarClasses.FExp|Sin(grammarClasses.E)
     //When we are computing an grammarClasses.F, we either have an grammarClasses.EP (an grammarClasses.E expression nested in parentheses), a simple variable letter,
     //some constant value, or an exponent. For now, we are going to worry about the constant values
-    getPossibleUValues(this)
-    r match {
-      //there is some multiplication or division happening if we have a TE
-      case Some(r) =>
-        r.l.r match {
-          //if the TE doesn't have a TE itself, then we know we likely have a simple exponent rule
-          case None =>
-            l match {
-              case _: Const =>
-                r.l.l match {
-                  case _: Var =>
-                    r.operation match {
-                      //we are just going to deal with multiplication for now, a little later on we'll handle division
-                      case '*' => exponentRule()
-                    }
+    if(checkIfPossibleSubstitutionRule(this)) {
+      getPossibleUValues(this)
+    }else {
+      r match {
+        //there is some multiplication or division happening if we have a TE
+        case Some(r) =>
+          r.l.r match {
+            //if the TE doesn't have a TE itself, then we know we likely have a simple exponent rule
+            case None =>
+              l match {
+                case _: Const =>
+                  r.l.l match {
+                    case _: Var =>
+                      r.operation match {
+                        //we are just going to deal with multiplication for now, a little later on we'll handle division
+                        case '*' => exponentRule()
+                      }
 
-                  case _: FExp =>
-                    r.operation match {
-                      //we are just going to deal with multiplication for now, a little later on we'll handle division
-                      case '*' => exponentRule()
-                    }
-                }
-              case _: Var =>
-                r.l.l match {
-                  case _: Const =>
-                    r.operation match {
-                      //note that this will throw up an error since I don't have it set for someone to write sometihng like
-                      //x*5, but it's a simple addition I just can't be bothered to include right now.
-                      case '*' => exponentRule()
-                    }
-                }
-            }
-          case Some(_) =>
-              //getPossibleUValues(this)
-        }
+                    case _: FExp =>
+                      r.operation match {
+                        //we are just going to deal with multiplication for now, a little later on we'll handle division
+                        case '*' => exponentRule()
+                      }
+                  }
+                case _: Var =>
+                  r.l.l match {
+                    case _: Const =>
+                      r.operation match {
+                        //note that this will throw up an error since I don't have it set for someone to write sometihng like
+                        //x*5, but it's a simple addition I just can't be bothered to include right now.
+                        case '*' => exponentRule()
+                      }
+                  }
+              }
+            case Some(_) =>
+            //getPossibleUValues(this)
+          }
 
-      //There is no TE, so just run the compute method on the F node
-      case None =>
-        l.runCompute()
-        integrationVal = l.getIntegrationVal
+        //There is no TE, so just run the compute method on the F node
+        case None =>
+          l.runCompute()
+          integrationVal = l.getIntegrationVal
+      }
     }
   }
 
@@ -232,7 +271,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
           case '/' =>
             //for every other type, we apply the general product rule
             //first, invert the divisor
-            val invertedDivisor = FExp(EP(T(r.get.l.l, None), None), Const(-1.0))
+            val invertedDivisor = FExp(EP(T(r.get.l.l, None), None), EP(T(Const(-1.0), None), None))
             val invertedDivisorString: String = ml.evaluateToInputForm("Simplify[" + invertedDivisor.getString() + "]", 0)
             val reParse = new full_expression_parser(invertedDivisorString)
             val finalInvertedExpression = reParse.parseT()
@@ -462,7 +501,8 @@ case class T(var l: F, var r: Option[TE]) extends S {
                     case _=>
                       //for every other type, we apply the general product rule
                       //first, invert the divisor
-                      val invertedDivisor = FExp(value.l.l, EP(T(Const(-1.0), None), None))
+                      //value.l.l
+                      val invertedDivisor = FExp(EP(T(value.l.l, None), None), EP(T(Const(-1.0), None), None))
                       //val invertedDivisorString: String = ml.evaluateToInputForm("Simplify[" + invertedDivisor.getString() + "]", 0)
                       val reParse = new full_expression_parser(invertedDivisor.getString())
                       val finalInvertedExpression = reParse.parseT()

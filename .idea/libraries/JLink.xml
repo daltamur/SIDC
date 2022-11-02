@@ -1,16 +1,9 @@
 <component name="libraryTable">
   <library name="JLink">
     <CLASSES>
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink" />
+      <root url="jar:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/JLink.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part1/GraphicsDlg" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part2" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part2/GraphicsApp" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part2/SimpleFrontEnd" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Source/Java" />
-    </SOURCES>
-    <jarDirectory url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink" recursive="false" />
+    <SOURCES />
   </library>
 </component>

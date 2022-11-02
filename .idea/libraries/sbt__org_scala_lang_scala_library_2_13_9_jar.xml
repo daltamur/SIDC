@@ -13,20 +13,12 @@
     </properties>
     <CLASSES>
       <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.9/scala-library-2.13.9.jar!/" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink" />
     </CLASSES>
     <JAVADOC>
       <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.9/scala-library-2.13.9-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
       <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.9/scala-library-2.13.9-sources.jar!/" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part1/GraphicsDlg" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part2" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part2/GraphicsApp" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Examples/Part2/SimpleFrontEnd" />
-      <root url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/Source/Java" />
     </SOURCES>
-    <jarDirectory url="file:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink" recursive="false" />
   </library>
 </component>
