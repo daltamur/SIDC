@@ -2,9 +2,15 @@ package grammarClasses
 
 import com.wolfram.jlink.KernelLink
 
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+import Runners.Main
+import Runners.Main.ml
+
 case class T(var l: F, var r: Option[TE]) extends S {
   override var integrationVal: String = _
   override var differntiationVal: String = _
+  private val substitutionMap = new mutable.HashMap[Int, ListBuffer[String]]()
 
   override def eval(): Unit = {
     //print("<Start T>")
@@ -99,55 +105,105 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
   }
 
-  def getNestedUVals(currentNode: F): Unit = {
+  def getNestedUVals(currentNode: F, currentImportance: Int): Unit = {
     currentNode match {
       case _: EP =>
         println("U value at: "+currentNode.getString())
-        getPossibleUValues(currentNode.asInstanceOf[EP].l)
-        checkEExtension(currentNode.asInstanceOf[EP].r)
+        substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+          default = {
+            new ListBuffer[String]
+          }) += currentNode.asInstanceOf[EP].getString())
+        getPossibleUValues(currentNode.asInstanceOf[EP].l, currentImportance+1)
+        checkEExtension(currentNode.asInstanceOf[EP].r, currentImportance+1)
 
+      case value: FExp =>
+        value.l match {
+          case ep: EP =>
+            println("U value at: " + value.l.getString())
+            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+              default = {
+                new ListBuffer[String]
+              }) += value.l.getString())
+            getPossibleUValues(ep.l, currentImportance + 1)
+            checkEExtension(ep.r, currentImportance + 1)
+          case _ =>
+        }
+
+        value.r match {
+          case ep: EP =>
+            println("U value at: " + value.r.getString())
+            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+              default = {
+                new ListBuffer[String]
+              }) += value.r.getString())
+            getPossibleUValues(ep.l, currentImportance + 1)
+            checkEExtension(ep.r, currentImportance + 1)
+
+          case fexp: FExp =>
+            println("U value at: " + fexp.getString())
+            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+              default = {
+                new ListBuffer[String]
+              }) += fexp.getString())
+            getNestedUVals(fexp, currentImportance + 1)
+
+          case _ =>
+
+        }
+
+      //do nothing for the rest of the possibilities for now
       case _ =>
     }
   }
 
-   def getPossibleUValues(currentNode: T): Unit = {
+   def getPossibleUValues(currentNode: T, currentImportance: Int): Unit = {
      //Since we know a U is almost certainly a nested expression, we will first look for the nested expressions
      //println("Current T Node: "+currentNode.getString)
      currentNode.l match {
        case _: EP =>
-         getNestedUVals(currentNode.l)
-         checkTExtension(currentNode.r)
+         getNestedUVals(currentNode.l, currentImportance)
+         checkTExtension(currentNode.r, currentImportance)
 
        case _: FExp =>
-         getNestedUVals(currentNode.l.asInstanceOf[FExp].l)
+         getNestedUVals(currentNode.l.asInstanceOf[FExp].l,currentImportance)
          if(currentNode.l.asInstanceOf[FExp].r.isInstanceOf[FExp]){
            println("U value at: "+currentNode.l.asInstanceOf[FExp].r.getString())
+           substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+             default = {
+               new ListBuffer[String]
+           })+=currentNode.l.asInstanceOf[FExp].r.getString())
          }
-         getNestedUVals(currentNode.l.asInstanceOf[FExp].r)
-         checkTExtension(currentNode.r)
+         getNestedUVals(currentNode.l.asInstanceOf[FExp].r, currentImportance+1)
+         checkTExtension(currentNode.r, currentImportance)
 
        case _ =>
-         checkTExtension(currentNode.r)
+         checkTExtension(currentNode.r, currentImportance)
 
      }
 
   }
 
-  def checkEExtension(currentNode: Option[Either[E2, E3]]): Unit = {
+  def checkEExtension(currentNode: Option[Either[E2, E3]], currentImportance: Int): Unit = {
     currentNode match {
       case Some(value) =>
         value match {
-          case Left(value)  => getPossibleUValues(value.l.l)
-          case Right(value) => getPossibleUValues(value.l.l)
+          case Left(value)  => {
+            getPossibleUValues(value.l.l, currentImportance)
+            checkEExtension(value.l.r, currentImportance)
+          }
+          case Right(value) => {
+            getPossibleUValues(value.l.l, currentImportance)
+            checkEExtension(value.l.r, currentImportance)
+          }
         }
 
       case _ => //println("Nested expression finished")
     }
   }
 
-  def checkTExtension(currentNode: Option[TE]): Unit = {
+  def checkTExtension(currentNode: Option[TE], currentImportance: Int): Unit = {
     currentNode match {
-      case Some(value) => getPossibleUValues(value.l)
+      case Some(value) => getPossibleUValues(value.l, currentImportance)
 
       case _ => //println("No further U's here")
     }
@@ -173,12 +229,33 @@ case class T(var l: F, var r: Option[TE]) extends S {
   }
 
 
-  override def compute(): Unit = {
+  def runIntegralSubRule(): Unit = {
+    getPossibleUValues(this, 0)
+    //iterate through substitution map keys
+    for(subKey <- substitutionMap.keys.toList.sorted){
+      //get the substitution vals at each key
+      for(subVal <- substitutionMap.get(subKey).get.distinct.toList){
+        println("U Val: " + subVal)
+        println(this.getString.replace(subVal, "u"))
+        //take the string, make an expression, and get the derivative of it.
+        val simplifiedVal = Main.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
+        val expr = new full_expression_parser(simplifiedVal)
+        val x = expr.parseE()
+        x.differentiate(Main.ml)
+        val uDeriv =  Main.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
+        println("U Derivative: " + uDeriv)
+        val rewrittenExpression = "(" + this.getString.replace(subVal, "u") + ") * (1/(" + uDeriv + "))"
+        println("Substituted Val: " +  Main.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
+      }
+    }
+  }
+
+  def compute(): Unit = {
     //grammarClasses.F->'('grammarClasses.E')'|var|const|grammarClasses.FExp|Sin(grammarClasses.E)
     //When we are computing an grammarClasses.F, we either have an grammarClasses.EP (an grammarClasses.E expression nested in parentheses), a simple variable letter,
     //some constant value, or an exponent. For now, we are going to worry about the constant values
     if(checkIfPossibleSubstitutionRule(this)) {
-      getPossibleUValues(this)
+      runIntegralSubRule()
     }else {
       r match {
         //there is some multiplication or division happening if we have a TE
