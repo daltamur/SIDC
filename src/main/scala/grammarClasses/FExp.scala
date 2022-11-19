@@ -23,7 +23,7 @@ case class FExp(var l: F, var r: F) extends F {
   override def compute(): Unit = {
     l match {
       //we love pattern matching, folks
-      case _: Var =>
+      case value: Var =>
         r match {
           //no known integrals for something like x^x, so we will only worry about if we have something like
           //1^x or x^1. Later on, we'll need to add some sort of exception catcher
@@ -36,7 +36,7 @@ case class FExp(var l: F, var r: F) extends F {
                 newExp = doubleVal + 1.0
                 newCoefficient = "1/" + newExp.toInt
             }
-            integrationVal = "((" + newCoefficient + ")" + "x^" + newExp.toInt+")"
+            integrationVal = "((" + newCoefficient + ")" + value.n +"^" + newExp.toInt+")"
         }
 
 

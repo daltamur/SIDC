@@ -14,7 +14,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.13.9:jar" level="project" />
     <orderEntry type="module-library">
-      <library>
+      <library name="sbt: unmanaged-jars">
         <CLASSES>
           <root url="jar:///usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/JLink.jar!/" />
         </CLASSES>

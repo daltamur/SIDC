@@ -14,6 +14,26 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="sbt: sbt-1.7.2">
         <CLASSES>
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo.scala-sbt.org/scalasbt/sbt-plugin-releases/com.eed3si9n/sbt-assembly/scala_2.12/sbt_1.0/0.14.6/jars/sbt-assembly.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/javax/annotation/jsr250-api/1.0/jsr250-api-1.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/javax/enterprise/cdi-api/1.0/cdi-api-1.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/apache/ant/ant-launcher/1.9.9/ant-launcher-1.9.9.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/apache/ant/ant/1.9.9/ant-1.9.9.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/apache/maven/maven-artifact/3.3.9/maven-artifact-3.3.9.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/apache/maven/maven-model/3.3.9/maven-model-3.3.9.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/apache/maven/maven-plugin-api/3.3.9/maven-plugin-api-3.3.9.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/codehaus/plexus/plexus-classworlds/2.5.2/plexus-classworlds-2.5.2.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.2/org.eclipse.sisu.inject-0.3.2.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.2/org.eclipse.sisu.plexus-0.3.2.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/ow2/asm/asm-commons/6.0/asm-commons-6.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/ow2/asm/asm-tree/6.0/asm-tree-6.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/ow2/asm/asm/6.0/asm-6.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/pantsbuild/jarjar/1.6.5/jarjar-1.6.5.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scalactic/scalactic_2.12/3.0.1/scalactic_2.12-3.0.1.jar!/" />
           <root url="jar://$USER_HOME$/.sbt/boot/scala-2.12.16/lib/scala-compiler.jar!/" />
           <root url="jar://$USER_HOME$/.sbt/boot/scala-2.12.16/lib/scala-library.jar!/" />
           <root url="jar://$USER_HOME$/.sbt/boot/scala-2.12.16/lib/scala-reflect.jar!/" />
@@ -106,11 +126,10 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="JLink" level="project" />
   </component>
   <component name="SbtModule">
     <option name="buildForURI" value="file:$MODULE_DIR$/../../" />
-    <option name="imports" value="SUB:DOLLAR3775bc3058faf5e4fc3e.`root`, _root_.sbt.Keys._, _root_.sbt.ScriptedPlugin.autoImport._, _root_.sbt.plugins.JUnitXmlReportPlugin.autoImport._, _root_.sbt.plugins.MiniDependencyTreePlugin.autoImport._, _root_.sbt._, _root_.sbt.nio.Keys._, _root_.sbt.plugins.IvyPlugin, _root_.sbt.plugins.JvmPlugin, _root_.sbt.plugins.CorePlugin, _root_.sbt.ScriptedPlugin, _root_.sbt.plugins.SbtPlugin, _root_.sbt.plugins.SemanticdbPlugin, _root_.sbt.plugins.JUnitXmlReportPlugin, _root_.sbt.plugins.Giter8TemplatePlugin, _root_.sbt.plugins.MiniDependencyTreePlugin, _root_.scala.xml.{TopScope=&gt;SUB:DOLLARscope}" />
+    <option name="imports" value="SUB:DOLLAR855083c527df70d0eee6.`root`, _root_.sbt.Keys._, _root_.sbt.ScriptedPlugin.autoImport._, _root_.sbt.plugins.JUnitXmlReportPlugin.autoImport._, _root_.sbt.plugins.MiniDependencyTreePlugin.autoImport._, _root_.sbtassembly.AssemblyPlugin.autoImport._, _root_.sbt._, _root_.sbt.nio.Keys._, _root_.sbt.plugins.IvyPlugin, _root_.sbt.plugins.JvmPlugin, _root_.sbt.plugins.CorePlugin, _root_.sbt.ScriptedPlugin, _root_.sbt.plugins.SbtPlugin, _root_.sbt.plugins.SemanticdbPlugin, _root_.sbt.plugins.JUnitXmlReportPlugin, _root_.sbt.plugins.Giter8TemplatePlugin, _root_.sbt.plugins.MiniDependencyTreePlugin, _root_.sbtassembly.AssemblyPlugin, _root_.scala.xml.{TopScope=&gt;SUB:DOLLARscope}" />
     <option name="resolvers" value="$USER_HOME$/.ivy2/cache|ivy|true|Local cache, https://repo1.maven.org/maven2/|maven|public" />
   </component>
 </module>

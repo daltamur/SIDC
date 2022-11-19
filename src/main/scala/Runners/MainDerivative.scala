@@ -58,7 +58,7 @@ object MainDerivative {
           //just to get what the parse error is
           val expr = new full_expression_parser(exprVal)
           expr.parseS()
-          Main.main(args)
+          MainIntegral.main(args)
         }
 
       } catch {

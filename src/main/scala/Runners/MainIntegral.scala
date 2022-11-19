@@ -5,12 +5,13 @@ import grammarClasses.full_expression_parser
 
 import java.util.Scanner
 
-object Main {
+object MainIntegral {
   //make our wolfram kernel link
   System.mapLibraryName("JLinkNativeLibrary")
   System.load("/usr/local/Wolfram/WolframEngine/13.1/SystemFiles/Links/JLink/SystemFiles/Libraries/Linux-x86-64/libJLinkNativeLibrary.so")
   val kernelLinkArgs: Array[String] = Array("-linkmode", "launch", "-linkname", "/usr/local/Wolfram/WolframEngine/13.1/Executables/math")
   var ml: KernelLink = null
+  var subIsU: Boolean = true
   try {
     ml = com.wolfram.jlink.MathLinkFactory.createKernelLink(kernelLinkArgs)
     ml.discardAnswer()
@@ -103,7 +104,7 @@ object Main {
           //just to get what the parse error is
           val expr = new full_expression_parser(exprVal)
           expr.parseS()
-          Main.main(args)
+          MainIntegral.main(args)
         }
 
       } catch {
@@ -136,13 +137,13 @@ object Main {
       }
 
       println("Done computing")
-      Main.main(args)
+      MainIntegral.main(args)
     }
     catch {
       case e: Exception =>
         println("Couldn't Integrate Simplified Expression! Expanding...")
         integrateExpandedFunction(exprVal)
-        Main.main(args)
+        MainIntegral.main(args)
     }
   }
 }

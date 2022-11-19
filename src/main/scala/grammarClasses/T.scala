@@ -4,8 +4,8 @@ import com.wolfram.jlink.KernelLink
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import Runners.Main
-import Runners.Main.ml
+import Runners.MainIntegral
+import Runners.MainIntegral.ml
 
 case class T(var l: F, var r: Option[TE]) extends S {
   override var integrationVal: String = _
@@ -218,7 +218,15 @@ case class T(var l: F, var r: Option[TE]) extends S {
            case Some(value) => checkIfPossibleSubstitutionRule(value.l)
            case _ => false
          }
-       //every other case, so long as there is multiplication or division happening, there is the posisbility of the substitution rule
+
+       case FExp(l, r) =>
+         if((l.isInstanceOf[Const] && r.isInstanceOf[EP]) || (l.isInstanceOf[EP] && r.isInstanceOf[Const])){
+           true
+         }else{
+           false
+         }
+
+       //every other case, so long as there is multiplication or division happening, there is the possisbility of the substitution rule
        case _ =>
          curTerm.r match {
            case Some(_) => true
@@ -234,18 +242,41 @@ case class T(var l: F, var r: Option[TE]) extends S {
     //iterate through substitution map keys
     for(subKey <- substitutionMap.keys.toList.sorted){
       //get the substitution vals at each key
-      for(subVal <- substitutionMap.get(subKey).get.distinct.toList){
-        println("U Val: " + subVal)
-        println(this.getString.replace(subVal, "u"))
+      for(subVal <- substitutionMap(subKey).distinct.toList){
+        var localSubValIsU = true
+        println("Sub Val: " + subVal)
+        var subExpression: String = null
+        if(MainIntegral.subIsU) {
+          println(this.getString.replace(subVal, "u"))
+          subExpression = this.getString.replace(subVal, "u")
+          MainIntegral.subIsU = false
+        }else{
+          println(this.getString.replace(subVal, "v"))
+          subExpression = this.getString.replace(subVal, "v")
+          MainIntegral.subIsU = true
+          localSubValIsU = false
+        }
         //take the string, make an expression, and get the derivative of it.
-        val simplifiedVal = Main.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
-        val expr = new full_expression_parser(simplifiedVal)
-        val x = expr.parseE()
-        x.differentiate(Main.ml)
-        val uDeriv =  Main.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
-        println("U Derivative: " + uDeriv)
-        val rewrittenExpression = "(" + this.getString.replace(subVal, "u") + ") * (1/(" + uDeriv + "))"
-        println("Substituted Val: " +  Main.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
+        var simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
+        var expr = new full_expression_parser(simplifiedVal)
+        var x = expr.parseE()
+        x.differentiate(MainIntegral.ml)
+        val subDeriv =  MainIntegral.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
+        println("Sub-Value Derivative: " + subDeriv)
+        val rewrittenExpression = "(" + subExpression + ") * (1/(" + subDeriv + "))"
+        println("Substituted Val: " +  MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
+        simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n"
+        if(!simplifiedVal.contains("x")) {
+          expr = new full_expression_parser(simplifiedVal)
+          x = expr.parseE()
+          x.compute()
+          if (localSubValIsU) {
+            integrationVal = x.getIntegrationVal.replace("u", subVal)
+          } else {
+            integrationVal = x.getIntegrationVal.replace("v", subVal)
+          }
+        }
+        //println(integrationVal)
       }
     }
   }
