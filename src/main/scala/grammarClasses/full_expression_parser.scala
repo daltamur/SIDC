@@ -106,7 +106,7 @@ class full_expression_parser(input: String) {
       }else{
         index+=1
         skipWhiteSpace()
-        T(Const(-1.0),Some(TE(parseT(), '*')) )
+        T(Const(-1),Some(TE(parseT(), '*')) )
       }
 
     }
@@ -128,6 +128,16 @@ class full_expression_parser(input: String) {
     //if neither of the above conditions are met, then we have reached the end of this part of the expression
     else None
 
+  }
+
+  def parseSqrt(): F = {
+    //index past the bracket
+    index+=1
+    val rtrn = FExp(parseF(), EP(T(Const(1), Some(TE((T(Const(2), None)), '/'))), None))
+    if(input(index) != ']'){
+      println("ERROR: Expected ']'")
+    }
+    rtrn
   }
 
   def parseF(): F = {
@@ -253,8 +263,11 @@ class full_expression_parser(input: String) {
       val varname = vars.next()
       index += varname.length()
       skipWhiteSpace()
-      //println("Index at grammarClasses.F")
-      //println(index)
+      //var name might be Sqrt, if it is, progress past it and make an FEXP node
+      if(varname.equals("Sqrt") && input(index) == '['){
+        return parseSqrt()
+      }
+
       Var(varname)
       if(index<= input.length-1){
         if(input(index) == '^'){
