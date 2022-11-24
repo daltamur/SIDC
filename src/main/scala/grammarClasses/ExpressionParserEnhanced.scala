@@ -52,14 +52,7 @@ class ExpressionParserEnhanced(input: String) {
   def ParseT: T ={
     val TRetNull: T = null
     if (input(index) == '-' || input(index) == '(' || input(index) == 'S' || "[a-z]".r.matches(input(index).toString) || "[0-9]".r.matches(input(index).toString)) {
-      //handle the negative case here
-      if (input(index) == '-' && "[a-zS(]".r.matches(input(index + 1).toString)) {
-        index += 1
-        skipWhiteSpace()
-        return T(Const(-1), Some(TE(ParseT, '*')))
-      } else {
-        return T(ParseF, ParseTTail)
-      }
+      return T(ParseF, ParseTTail)
     }
     //check fails, tell the user what the error was
     println("ERROR on line " + index + ": expected alphabetic letter, constant, '-', '(', instead got "+input(index))
@@ -105,8 +98,9 @@ class ExpressionParserEnhanced(input: String) {
           index += currStr.length
           skipWhiteSpace()
           Const(currStr.toDouble)
-        }else if (input(index) == '-' && "[a-zS]".r.matches(input(index+1).toString)){
-          FRetNull
+        }else if (input(index) == '-' && "[a-zS(]".r.matches(input(index+1).toString)){
+          index += 1
+          EP(T(Const(-1), Some(TE(T(ParseF, None), '*'))), None)
         }else{
           println("ERROR: Expected digit at index " + index + " instead found " + input(index))
           FRetNull
@@ -117,8 +111,21 @@ class ExpressionParserEnhanced(input: String) {
         if(variable.hasNext){
           currStr = variable.next()
           index+=currStr.length
-          skipWhiteSpace()
-          Var(currStr)
+          //check and see if the next two characters are "n["
+          if(index+2<input.length && input.substring(index, index+2) == "n["){
+            index += 2
+            val returnVal = naturalLog(EP(ParseT, ParseETail))
+            if (index == input.length || input(index) != ']') {
+              println("ERROR: Expected ] at index " + index)
+              return null
+            }
+            index += 1
+            skipWhiteSpace()
+            returnVal
+          }else {
+            skipWhiteSpace()
+            Var(currStr)
+          }
         }else{
           println("ERROR: Expected variable letter at index " + index + " instead found " + input(index))
           FRetNull
@@ -181,9 +188,9 @@ class ExpressionParserEnhanced(input: String) {
     if (input(index) == '-' && "[a-zS(]".r.matches(input(index + 1).toString)) {
       index += 1
       rightSide = EP(T(Const(-1),Some(TE(T(ParseF,None), '*'))),None)
-      FExp(EP(T(leftSide, None), None), rightSide)
+      FExp(leftSide, rightSide)
     } else {
-      FExp(EP(T(leftSide, None), None), EP(T(ParseF, None), None))
+      FExp(leftSide, ParseF)
     }
   }
 
@@ -195,4 +202,5 @@ class ExpressionParserEnhanced(input: String) {
       }
     }
   }
+
 }

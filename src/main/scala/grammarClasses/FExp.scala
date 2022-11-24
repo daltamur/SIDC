@@ -51,7 +51,12 @@ case class FExp(var l: F, var r: F) extends F {
           l.getParamVal match {
             case Right(doubleVal) => baseValue = doubleVal
           }
-          integrationVal = "((" + baseValue + "^" + variableLetter + ")/ln[" + baseValue + "])"
+          if(baseValue>0) {
+            integrationVal = "((" + baseValue + "^" + variableLetter + ")/ln[" + baseValue + "])"
+          }else{
+            baseValue = baseValue * -1
+            integrationVal = "(-1*((" + baseValue + "^" + variableLetter + ")/ln[" + baseValue + "]))"
+          }
 
       }
 
@@ -79,8 +84,13 @@ case class FExp(var l: F, var r: F) extends F {
         r match {
           case _: Var =>
             //exponentRule rule
-            val baseString = l.asInstanceOf[Const].getString()
-            differntiationVal = "(ln[" + baseString + "]*(" + baseString + ")^" + r.asInstanceOf[Var].n+")"
+            var baseString = l.asInstanceOf[Const].getString()
+            if(l.asInstanceOf[Const].v > 0) {
+              differntiationVal = "(ln[" + baseString + "]*(" + baseString + ")^" + r.asInstanceOf[Var].n + ")"
+            }else{
+              val baseVal = l.asInstanceOf[Const].v * -1
+              differntiationVal = "(-1*(ln[" + baseVal.asInstanceOf[Int] + "]*(" + baseVal.asInstanceOf[Int] + ")^" + r.asInstanceOf[Var].n + "))"
+            }
 
           case _ =>
             //exponent is EP or FEXP

@@ -46,6 +46,7 @@ object MainIntegral {
       val x = expr.ParseS
       //println(x.getString)
       println(x)
+      println(x.getString)
       //x.differentiate(ml)
       x.asInstanceOf[E].compute()
       //println(x.getIntegrationVal)

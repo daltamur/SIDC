@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 
 object Main {
   def main(args: Array[String]): Unit = {
-    Runners.MainDerivative.main(args)
+    Runners.MainIntegral.main(args)
 //    val inputScanner = new Scanner(System.in)
 //    inputScanner.useDelimiter("\n")
 //    print("Expression? ")

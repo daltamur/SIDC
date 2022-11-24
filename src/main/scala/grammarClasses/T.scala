@@ -165,6 +165,12 @@ case class T(var l: F, var r: Option[TE]) extends S {
          checkTExtension(currentNode.r, currentImportance)
 
        case _: FExp =>
+         //add the exponent itself
+         println("U value at: " + currentNode.l.asInstanceOf[FExp].getString())
+         substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+           default = {
+             new ListBuffer[String]
+           }) += currentNode.l.asInstanceOf[FExp].getString())
          getNestedUVals(currentNode.l.asInstanceOf[FExp].l,currentImportance)
          if(currentNode.l.asInstanceOf[FExp].r.isInstanceOf[FExp]){
            println("U value at: "+currentNode.l.asInstanceOf[FExp].r.getString())
@@ -220,7 +226,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
          }
 
        case FExp(l, r) =>
-         if((l.isInstanceOf[Const] && r.isInstanceOf[EP]) || (l.isInstanceOf[EP] && r.isInstanceOf[Const])){
+         if((l.isInstanceOf[Const] && r.isInstanceOf[EP]) || (l.isInstanceOf[EP] && r.isInstanceOf[Const]) || l.isInstanceOf[Var] || r.isInstanceOf[Var]){
            true
          }else{
            false
@@ -258,18 +264,18 @@ case class T(var l: F, var r: Option[TE]) extends S {
         }
         //take the string, make an expression, and get the derivative of it.
         var simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
-        var expr = new full_expression_parser(simplifiedVal)
-        var x = expr.parseE()
-        x.differentiate(MainIntegral.ml)
+        var expr = new ExpressionParserEnhanced(simplifiedVal)//full_expression_parser(simplifiedVal)
+        var x = expr.ParseE
+        x.asInstanceOf[E].differentiate(MainIntegral.ml)
         val subDeriv =  MainIntegral.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
         println("Sub-Value Derivative: " + subDeriv)
         val rewrittenExpression = "(" + subExpression + ") * (1/(" + subDeriv + "))"
         println("Substituted Val: " +  MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
         simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n"
         if(!simplifiedVal.contains("x")) {
-          expr = new full_expression_parser(simplifiedVal)
-          x = expr.parseE()
-          x.compute()
+          expr = new ExpressionParserEnhanced(simplifiedVal)//full_expression_parser(simplifiedVal)
+          x = expr.ParseE
+          x.asInstanceOf[E].compute()
           if (localSubValIsU) {
             integrationVal = x.getIntegrationVal.replace("u", subVal)
           } else {
