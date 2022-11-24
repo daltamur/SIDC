@@ -2,12 +2,12 @@ package grammarClasses
 
 class ExpressionParserEnhanced(input: String) {
   private var index:Int = 0
-  def ParseS(): S = {
+  def ParseS: S = {
     var SRetNull: S = null
     if (input(index) == '-' || input(index) == '(' || input(index) == 'S' || "[a-z]".r.matches(input(index).toString) || "[0-9]".r.matches(input(index).toString)) {
       //first set match passes, do not index past anything yet though
       val returnVal = ParseE
-      if(index != input.length){
+      if(index != input.length && input(index) != '\n'){
         println("ERROR expected end of input at "+index+ " instead got "+input(index))
         return null
       }
@@ -29,7 +29,7 @@ class ExpressionParserEnhanced(input: String) {
   }
 
   def ParseETail:Option[Either[E2, E3]] ={
-    if (index > input.length-1) {
+    if (index > input.length-1 || input(index) == '\n') {
       return None
     }
     if(input(index)=='+'){
@@ -68,7 +68,7 @@ class ExpressionParserEnhanced(input: String) {
 
   def ParseTTail: Option[TE] = {
 
-    if(index>input.length-1){
+    if(index>input.length-1 || input(index) == '\n'){
       return None
     }
     if (input(index) == '*') {
@@ -117,6 +117,7 @@ class ExpressionParserEnhanced(input: String) {
         if(variable.hasNext){
           currStr = variable.next()
           index+=currStr.length
+          skipWhiteSpace()
           Var(currStr)
         }else{
           println("ERROR: Expected variable letter at index " + index + " instead found " + input(index))
@@ -124,6 +125,7 @@ class ExpressionParserEnhanced(input: String) {
         }
       case "(" =>
         index += 1
+        skipWhiteSpace()
         val returnedEP = EP(ParseT, ParseETail)
         if(index == input.length || input(index)!=')'){
           println("ERROR: Expected ) at index " + index)
@@ -193,7 +195,4 @@ class ExpressionParserEnhanced(input: String) {
       }
     }
   }
-
-
-
 }

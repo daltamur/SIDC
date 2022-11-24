@@ -1,7 +1,7 @@
 package Runners
 
 import com.wolfram.jlink.{KernelLink, MathLinkException}
-import grammarClasses.full_expression_parser
+import grammarClasses.{E, ExpressionParserEnhanced, full_expression_parser}
 
 import java.util.Scanner
 
@@ -56,8 +56,8 @@ object MainDerivative {
         strResult = ml.evaluateToInputForm("Simplify[" + exprVal + "]", 0) + "\n"
         if (strResult == "$Failed\n") {
           //just to get what the parse error is
-          val expr = new full_expression_parser(exprVal)
-          expr.parseS()
+          val expr = new ExpressionParserEnhanced(exprVal)//full_expression_parser(exprVal)
+          expr.ParseS
           MainIntegral.main(args)
         }
 
@@ -66,11 +66,11 @@ object MainDerivative {
       }
 
       //println(strResult)
-      val expr = new full_expression_parser(strResult)
-      val x = expr.parseE()
+      val expr = new ExpressionParserEnhanced(strResult)//full_expression_parser(strResult)
+      val x = expr.ParseS
       //println(x.getString)
       println(x)
-      x.differentiate(ml)
+      x.asInstanceOf[E].differentiate(ml)
 
       if (x.getDifferentiationVal != null) {
         println(x.getDifferentiationVal)
