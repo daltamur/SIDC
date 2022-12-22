@@ -12,6 +12,7 @@ object MainIntegral {
   val kernelLinkArgs: Array[String] = Array("-linkmode", "launch", "-linkname", "/usr/local/Wolfram/WolframEngine/13.1/Executables/math")
   var ml: KernelLink = null
   var subIsU: Boolean = true
+  var curVar: String = ""
   try {
     ml = com.wolfram.jlink.MathLinkFactory.createKernelLink(kernelLinkArgs)
     ml.discardAnswer()
@@ -33,7 +34,7 @@ object MainIntegral {
         strResult = ml.evaluateToInputForm("Expand[" + exprVal + "]", 0) + "\n"
         if (strResult == "$Failed\n") {
           //just to get what the parse error is
-          val expr = new ExpressionParserEnhanced(exprVal)//full_expression_parser(exprVal)
+          val expr = new ExpressionParserEnhanced(exprVal)
           expr.ParseS
         }
 
@@ -41,20 +42,12 @@ object MainIntegral {
         case e: MathLinkException => println(e.getMessage)
       }
 
-      //println(strResult)
-      val expr = new ExpressionParserEnhanced(strResult)//full_expression_parser(strResult)
+      val expr = new ExpressionParserEnhanced(strResult)
       val x = expr.ParseS
-      //println(x.getString)
+      curVar = expr.curVar
       println(x)
       println(x.getString)
-      //x.differentiate(ml)
       x.asInstanceOf[E].compute()
-      //println(x.getIntegrationVal)
-      //                if (x.getDifferentiationVal != null) {
-      //                        println(x.getDifferentiationVal)
-      //                }else{
-      //                        println("ERROR! Attempted to use a non-positive number in natural log")
-      //                }
       try {
         strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + "]", 0)
         System.out.println(strResult)
@@ -106,7 +99,11 @@ object MainIntegral {
           //just to get what the parse error is
           val expr = new ExpressionParserEnhanced(exprVal)//full_expression_parser(exprVal)
           expr.ParseS
+          if(!expr.error.isBlank){
+            println(expr.error)
+          }
           MainIntegral.main(args)
+          return
         }
 
 
@@ -118,16 +115,19 @@ object MainIntegral {
       //println(strResult)
       val expr = new ExpressionParserEnhanced(strResult)//full_expression_parser(strResult)
       val x = expr.ParseE
-      //println(x.getString)
+      if(!expr.error.isBlank){
+        println(expr.error)
+        MainIntegral.main(args)
+        return
+      }
+
+      if(expr.curVar.equals("u") || expr.curVar.equals("v")){
+        println("ERROR: Variable letter " + expr.curVar + " is protected. Use variable letters that are not u or v.")
+        MainIntegral.main(args)
+        return
+      }
       println(x)
-      //x.differentiate(ml)
       x.compute()
-      //println(x.getIntegrationVal)
-      //                if (x.getDifferentiationVal != null) {
-      //                        println(x.getDifferentiationVal)
-      //                }else{
-      //                        println("ERROR! Attempted to use a non-positive number in natural log")
-      //                }
       try {
         strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + "]", 0)
         if (strResult.contains("null")) {

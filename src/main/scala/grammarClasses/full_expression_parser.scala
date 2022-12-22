@@ -51,7 +51,7 @@ class full_expression_parser(input: String) {
     }else{
       println("Error: Expected (, variable, or constant value, instead got "+input(index)+" at "+index)
       hadError = true
-      E(T(Const(5), None), None)
+      E(T(Const(5, eulersNum = false), None), None)
     }
   }
 
@@ -106,7 +106,7 @@ class full_expression_parser(input: String) {
       }else{
         index+=1
         skipWhiteSpace()
-        T(Const(-1),Some(TE(parseT(), '*')) )
+        T(Const(-1, eulersNum = false),Some(TE(parseT(), '*')) )
       }
 
     }
@@ -133,7 +133,7 @@ class full_expression_parser(input: String) {
   def parseSqrt(): F = {
     //index past the bracket
     index+=1
-    val rtrn = FExp(parseF(), EP(T(Const(1), Some(TE((T(Const(2), None)), '/'))), None))
+    val rtrn = FExp(parseF(), EP(T(Const(1, eulersNum = false), Some(TE((T(Const(2, eulersNum = false), None)), '/'))), None))
     if(input(index) != ']'){
       println("ERROR: Expected ']'")
     }
@@ -155,7 +155,7 @@ class full_expression_parser(input: String) {
       //println(const.toInt)
       //println(index)
       var returnVal: F=null
-      returnVal = Const(const.toDouble)
+      returnVal = Const(const.toDouble, eulersNum = false)
       if(index <= input.length-1){
         if(input(index) == '^'){
           index+=1
@@ -178,7 +178,7 @@ class full_expression_parser(input: String) {
               val stringVal = constsVal.next()
               index+= stringVal.length()
               skipWhiteSpace()
-              val curPossibleVal = FExp(returnVal,Const(stringVal.toDouble))
+              val curPossibleVal = FExp(returnVal,Const(stringVal.toDouble, eulersNum = false))
               if (returnVal.asInstanceOf[Const].v == 0)
                 returnVal
               else
@@ -186,7 +186,7 @@ class full_expression_parser(input: String) {
             }else if(input(index+1) == '('){
               index+=1
               skipWhiteSpace()
-              val curPossibleVal = FExp(returnVal,EP(T(Const(-1),Some(TE(T(parseF(), None), '*'))), None))
+              val curPossibleVal = FExp(returnVal,EP(T(Const(-1, eulersNum = false),Some(TE(T(parseF(), None), '*'))), None))
               if (returnVal.asInstanceOf[Const].v == 0)
                 returnVal
               else
@@ -237,10 +237,10 @@ class full_expression_parser(input: String) {
               val stringVal = constsVal.next()
               index+= stringVal.length()
               skipWhiteSpace()
-              FExp(nested_expression,Const(stringVal.toDouble))
+              FExp(nested_expression,Const(stringVal.toDouble, eulersNum = false))
             }else if(input(index+1) == '('){
               index+=1
-              FExp(nested_expression,EP(T(Const(-1),Some(TE(T(parseF(), None), '*'))), None))
+              FExp(nested_expression,EP(T(Const(-1, eulersNum = false),Some(TE(T(parseF(), None), '*'))), None))
             }else{
               //we have a variable letter
               val varString = varregex.findAllIn(currStrVal)
@@ -287,10 +287,10 @@ class full_expression_parser(input: String) {
               val stringVal = constsVal.next()
               index+= stringVal.length()
               skipWhiteSpace()
-              FExp(Var(varname),Const(stringVal.toDouble))
+              FExp(Var(varname),Const(stringVal.toDouble, eulersNum = false))
             }else if(input(index+1) == '('){
               index+=1
-              FExp(Var(varname),EP(T(Const(-1),Some(TE(T(parseF(), None), '*'))), None))
+              FExp(Var(varname),EP(T(Const(-1,eulersNum = false),Some(TE(T(parseF(), None), '*'))), None))
             }else{
               //we have a variable letter
               val varString = varregex.findAllIn(currStrVal)

@@ -36,6 +36,19 @@ case class E(l: T, r: Option[Either[E2, E3]]) extends S {
 
   }
 
+  def checkAllOneVar(variable: String): Boolean = {
+    var returnedVal = l.checkAllOneVar(variable)
+    if(!returnedVal){
+      return returnedVal
+    }
+    if(r.isDefined && r.get.isLeft){
+      returnedVal = r.get.asInstanceOf[Left[E2, E3]].value.l.checkAllOneVar(variable)
+    }else if(r.isDefined && r.get.isRight){
+      returnedVal = r.get.asInstanceOf[Right[E2, E3]].value.l.checkAllOneVar(variable)
+    }
+    returnedVal
+  }
+
   override def getIntegrationVal: String = {
     integrationVal
   }

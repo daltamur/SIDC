@@ -21,7 +21,30 @@ case class EP(var l: T, var r: Option[Either[E2, E3]]) extends F {
 
   }
 
-  override def compute(): Unit = ???
+  override def compute(): Unit = {
+    l.compute()
+    r match {
+      case Some(Left(r)) =>
+        r.fork()
+        r.join()
+        integrationVal = l.getIntegrationVal + "+" + r.getIntegrationVal
+      case Some(Right(r)) =>
+        r.fork()
+        r.join()
+        integrationVal = l.getIntegrationVal + "-" + r.getIntegrationVal
+      case None => integrationVal = l.getIntegrationVal
+    }
+  }
+
+  def checkAllOneVar(variable: String): Boolean = {
+    var returnedVal = l.checkAllOneVar(variable)
+    if (r.isDefined && r.get.isLeft) {
+      returnedVal = r.get.asInstanceOf[Left[E2, E3]].value.l.checkAllOneVar(variable)
+    } else if (r.isDefined && r.get.isRight) {
+      returnedVal = r.get.asInstanceOf[Right[E2, E3]].value.l.checkAllOneVar(variable)
+    }
+    returnedVal
+  }
 
   override def getIntegrationVal(): String = {
     integrationVal

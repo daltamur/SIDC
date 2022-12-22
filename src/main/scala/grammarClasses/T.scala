@@ -216,17 +216,16 @@ case class T(var l: F, var r: Option[TE]) extends S {
   }
 
    def checkIfPossibleSubstitutionRule(curTerm: T): Boolean = {
-    //if an expression cannot be broken down to merely
      curTerm.l match {
        //left value is a constant, skip over it and check all the other terms
-       case Const(_) =>
+       case Const(_, _) =>
          curTerm.r match {
            case Some(value) => checkIfPossibleSubstitutionRule(value.l)
            case _ => false
          }
 
        case FExp(l, r) =>
-         if((l.isInstanceOf[Const] && r.isInstanceOf[EP]) || (l.isInstanceOf[EP] && r.isInstanceOf[Const]) || l.isInstanceOf[Var] || r.isInstanceOf[Var]){
+         if((l.isInstanceOf[Const] && r.isInstanceOf[EP]) || (l.isInstanceOf[EP] && r.isInstanceOf[Const]) || (l.isInstanceOf[Var] && r.isInstanceOf[Var])){
            true
          }else{
            false
@@ -242,11 +241,26 @@ case class T(var l: F, var r: Option[TE]) extends S {
      }
   }
 
+  def checkAllOneVar(variable: String): Boolean = {
+    var isOneVariable = true
+    l match {
+      case x: Var => isOneVariable = x.checkAllOneVar(variable)
+      case x: FExp => isOneVariable = x.checkAllOneVar(variable)
+      case x: EP => isOneVariable = x.checkAllOneVar(variable)
+      case _ => //do nothing
+    }
+
+    if(r.isDefined && isOneVariable){
+      isOneVariable = r.get.l.checkAllOneVar(variable)
+    }
+    isOneVariable
+  }
+
 
   def runIntegralSubRule(): Unit = {
     getPossibleUValues(this, 0)
     //iterate through substitution map keys
-    for(subKey <- substitutionMap.keys.toList.sorted){
+    for(subKey <- substitutionMap.keys.toList.sorted.reverse){
       //get the substitution vals at each key
       for(subVal <- substitutionMap(subKey).distinct.toList){
         var localSubValIsU = true
@@ -265,24 +279,37 @@ case class T(var l: F, var r: Option[TE]) extends S {
         //take the string, make an expression, and get the derivative of it.
         var simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
         var expr = new ExpressionParserEnhanced(simplifiedVal)//full_expression_parser(simplifiedVal)
-        var x = expr.ParseE
+        var x = expr.ParseS
         x.asInstanceOf[E].differentiate(MainIntegral.ml)
         val subDeriv =  MainIntegral.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
         println("Sub-Value Derivative: " + subDeriv)
         val rewrittenExpression = "(" + subExpression + ") * (1/(" + subDeriv + "))"
         println("Substituted Val: " +  MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
         simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n"
-        if(!simplifiedVal.contains("x")) {
-          expr = new ExpressionParserEnhanced(simplifiedVal)//full_expression_parser(simplifiedVal)
-          x = expr.ParseE
-          x.asInstanceOf[E].compute()
+        expr = new ExpressionParserEnhanced(simplifiedVal)
+        x = expr.ParseE
+        if(expr.error.isBlank) {
+          var allOneVar: Boolean = true
           if (localSubValIsU) {
-            integrationVal = x.getIntegrationVal.replace("u", subVal)
+            allOneVar = x.asInstanceOf[E].checkAllOneVar("u")
           } else {
-            integrationVal = x.getIntegrationVal.replace("v", subVal)
+            allOneVar = x.asInstanceOf[E].checkAllOneVar("v")
           }
+          if (allOneVar) {
+            expr = new ExpressionParserEnhanced(simplifiedVal) //full_expression_parser(simplifiedVal)
+            x = expr.ParseE
+            x.asInstanceOf[E].compute()
+            if (x.getIntegrationVal != null) {
+              if (localSubValIsU) {
+                integrationVal = x.getIntegrationVal.replace("u", subVal)
+              } else {
+                integrationVal = x.getIntegrationVal.replace("v", subVal)
+              }
+            }
+          }
+        }else{
+          println("Won't work")
         }
-        //println(integrationVal)
       }
     }
   }
@@ -319,8 +346,6 @@ case class T(var l: F, var r: Option[TE]) extends S {
                   r.l.l match {
                     case _: Const =>
                       r.operation match {
-                        //note that this will throw up an error since I don't have it set for someone to write sometihng like
-                        //x*5, but it's a simple addition I just can't be bothered to include right now.
                         case '*' => exponentRule()
                       }
                   }
@@ -385,7 +410,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
           case '/' =>
             //for every other type, we apply the general product rule
             //first, invert the divisor
-            val invertedDivisor = FExp(EP(T(r.get.l.l, None), None), EP(T(Const(-1.0), None), None))
+            val invertedDivisor = FExp(EP(T(r.get.l.l, None), None), EP(T(Const(-1.0, false), None), None))
             val invertedDivisorString: String = ml.evaluateToInputForm("Simplify[" + invertedDivisor.getString() + "]", 0)
             val reParse = new full_expression_parser(invertedDivisorString)
             val finalInvertedExpression = reParse.parseT()
@@ -439,11 +464,11 @@ case class T(var l: F, var r: Option[TE]) extends S {
               case _: FExp =>
                 value.l.l.asInstanceOf[FExp].r match {
                   case ep: EP =>
-                    value.l.l.asInstanceOf[FExp].r = EP(T(Const(-1.0), Some(TE(T(ep, None), '*'))), None)
+                    value.l.l.asInstanceOf[FExp].r = EP(T(Const(-1.0,false), Some(TE(T(ep, None), '*'))), None)
                     println(value.l.l.getString())
                   //exponent value is an exponent itself, do -1*(exponent value)
                   case exp: FExp =>
-                    value.l.l.asInstanceOf[FExp].r = EP(T(Const(-1.0), Some(TE(T(EP(T(exp, None),None), None), '*'))), None)
+                    value.l.l.asInstanceOf[FExp].r = EP(T(Const(-1.0, false), Some(TE(T(EP(T(exp, None),None), None), '*'))), None)
                     println(value.l.l.getString())
 
                   //exponent is a constant
@@ -458,14 +483,14 @@ case class T(var l: F, var r: Option[TE]) extends S {
                 }
               //dividing by a parenthesized expression with no exponent attached to it
            case expression: EP =>
-             value.l.l =  FExp(expression,Const(-1.0))
+             value.l.l =  FExp(expression,Const(-1.0, false))
              println(value.l.getString)
              value.l.l.asInstanceOf[FExp].differentiate(ml)
              differntiationVal = value.l.l.getDifferentiationVal
              println(differntiationVal)
 
            case variable: Var =>
-             value.l.l =  FExp(variable,Const(-1.0))
+             value.l.l =  FExp(variable,Const(-1.0, false))
              println(value.l.getString)
              value.l.l.asInstanceOf[FExp].differentiate(ml)
              differntiationVal = "("+l.getString() + ")*(" + value.l.l.getDifferentiationVal+")"
@@ -616,7 +641,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
                       //for every other type, we apply the general product rule
                       //first, invert the divisor
                       //value.l.l
-                      val invertedDivisor = FExp(EP(T(value.l.l, None), None), EP(T(Const(-1.0), None), None))
+                      val invertedDivisor = FExp(EP(T(value.l.l, None), None), EP(T(Const(-1.0, false), None), None))
                       //val invertedDivisorString: String = ml.evaluateToInputForm("Simplify[" + invertedDivisor.getString() + "]", 0)
                       val reParse = new full_expression_parser(invertedDivisor.getString())
                       val finalInvertedExpression = reParse.parseT()
@@ -678,6 +703,9 @@ case class T(var l: F, var r: Option[TE]) extends S {
       case None =>
         l match {
           case value: Const =>
+            if(value.eulersNum){
+              return false
+            }
             if(value.v <= 0){
               true
             }else{

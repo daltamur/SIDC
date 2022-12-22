@@ -38,4 +38,8 @@ case class Var(var n: String) extends F {
   }
 
   override def getString(): String = n
+
+  def checkAllOneVar(variable: String): Boolean = {
+    n.equals(variable)
+  }
 }

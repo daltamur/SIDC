@@ -2,7 +2,7 @@ package grammarClasses
 
 import com.wolfram.jlink.KernelLink
 
-case class Const(var v: Double) extends F {
+case class Const(var v: Double, val eulersNum: Boolean) extends F {
   //def eval(env: Main.Environment): Int = v
   override var integrationVal: String = _
   override var differntiationVal: String = _
@@ -12,7 +12,23 @@ case class Const(var v: Double) extends F {
   }
 
   override def compute(): Unit = {
-    integrationVal = v + "x"
+    if(!eulersNum) {
+      var vVal: String = ""
+      if(v%1 == 0){
+        vVal = v.toInt.toString
+      }else{
+        vVal = v.toString
+      }
+      integrationVal = vVal + Runners.MainIntegral.curVar
+      if(Runners.MainIntegral.curVar.isBlank){
+        integrationVal = vVal + "x"
+      }
+    } else{
+      integrationVal = "e" + Runners.MainIntegral.curVar
+      if (Runners.MainIntegral.curVar.isBlank) {
+        integrationVal = "e" + "x"
+      }
+    }
   }
 
   override def differentiate(ml: KernelLink): Unit = {
@@ -20,11 +36,11 @@ case class Const(var v: Double) extends F {
   }
 
   def getConstVal: Double = {
-    return v
+    v
   }
 
   override def getIntegrationVal(): String = {
-    return integrationVal
+    integrationVal
   }
 
   override def getParamVal: Either[String, Double] = {
@@ -43,10 +59,13 @@ case class Const(var v: Double) extends F {
     }
   }
   override def getString(): String = {
-    if (convertToIntTruth()){
-      return v.toInt.toString
-    }else{
-      return v.toString
+    if(eulersNum){
+      return "e"
+    }
+    if (convertToIntTruth()) {
+      v.toInt.toString
+    } else {
+      v.toString
     }
   }
 }

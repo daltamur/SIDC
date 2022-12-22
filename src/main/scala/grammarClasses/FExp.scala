@@ -84,12 +84,16 @@ case class FExp(var l: F, var r: F) extends F {
         r match {
           case _: Var =>
             //exponentRule rule
-            var baseString = l.asInstanceOf[Const].getString()
-            if(l.asInstanceOf[Const].v > 0) {
-              differntiationVal = "(ln[" + baseString + "]*(" + baseString + ")^" + r.asInstanceOf[Var].n + ")"
-            }else{
-              val baseVal = l.asInstanceOf[Const].v * -1
-              differntiationVal = "(-1*(ln[" + baseVal.asInstanceOf[Int] + "]*(" + baseVal.asInstanceOf[Int] + ")^" + r.asInstanceOf[Var].n + "))"
+            if(l.asInstanceOf[Const].eulersNum){
+              differntiationVal = "e^"+r.asInstanceOf[Var].n
+            }else {
+              var baseString = l.asInstanceOf[Const].getString()
+              if (l.asInstanceOf[Const].v > 0) {
+                differntiationVal = "(ln[" + baseString + "]*(" + baseString + ")^" + r.asInstanceOf[Var].n + ")"
+              } else {
+                val baseVal = l.asInstanceOf[Const].v * -1
+                differntiationVal = "(-1*(ln[" + baseVal.asInstanceOf[Int] + "]*(" + baseVal.asInstanceOf[Int] + ")^" + r.asInstanceOf[Var].n + "))"
+              }
             }
 
           case _ =>
@@ -199,4 +203,23 @@ case class FExp(var l: F, var r: F) extends F {
   }
 
   override def getString(): String = l.getString+'^'+r.getString
+
+  def checkAllOneVar(variable: String): Boolean = {
+    var isOneVariable = true
+    l match {
+      case x:Var => isOneVariable = x.checkAllOneVar(variable)
+      case x:FExp => isOneVariable = x.checkAllOneVar(variable)
+      case x:EP => isOneVariable = x.checkAllOneVar(variable)
+      case _ => //do nothing
+    }
+    if(isOneVariable) {
+      r match {
+        case x: Var => isOneVariable = x.checkAllOneVar(variable)
+        case x: FExp => isOneVariable = x.checkAllOneVar(variable)
+        case x: EP => isOneVariable = x.checkAllOneVar(variable)
+        case _ => //do nothing
+      }
+    }
+    isOneVariable
+  }
 }

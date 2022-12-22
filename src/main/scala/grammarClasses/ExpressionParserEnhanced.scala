@@ -1,12 +1,15 @@
 package grammarClasses
 
 class ExpressionParserEnhanced(input: String) {
+  var curVar:String = ""
   private var index:Int = 0
+  var error:String = ""
   def ParseS: S = {
     var SRetNull: S = null
     if (input(index) == '-' || input(index) == '(' || input(index) == 'S' || "[a-z]".r.matches(input(index).toString) || "[0-9]".r.matches(input(index).toString)) {
       //first set match passes, do not index past anything yet though
       val returnVal = ParseE
+      curVar = ""
       if(index != input.length && input(index) != '\n'){
         println("ERROR expected end of input at "+index+ " instead got "+input(index))
         return null
@@ -14,7 +17,7 @@ class ExpressionParserEnhanced(input: String) {
       return returnVal
     }
     //check fails, tell the user what the error was
-    println("ERROR on line " + index + ": expected alphabetic letter, constant '-', '(', instead got "+input(index))
+    error = "ERROR on line " + index + ": expected variable letter, constant '-', '(', instead got "+input(index)
     SRetNull
   }
 
@@ -24,7 +27,7 @@ class ExpressionParserEnhanced(input: String) {
       //first set match passes, do not index past anything yet though
       return E(ParseT, ParseETail)
     }
-    println("ERROR on line " + index + ": expected alphabetic letter, constant '-', '(', instead got "+input(index))
+    error = "ERROR on line " + index + ": expected variable letter, constant '-', '(', instead got "+input(index)
     ERetNull
   }
 
@@ -44,7 +47,7 @@ class ExpressionParserEnhanced(input: String) {
       None
     }else{
       //if we are not at the very end of the input or the current character isn't plus or minus, we have a syntax error
-      println("ERROR: expected +, -, or end of input at index " + index + " instead found " + input(index))
+      error = "ERROR: expected +, -, or end of input at index " + index + " instead found " + input(index)
       null
     }
   }
@@ -55,7 +58,7 @@ class ExpressionParserEnhanced(input: String) {
       return T(ParseF, ParseTTail)
     }
     //check fails, tell the user what the error was
-    println("ERROR on line " + index + ": expected alphabetic letter, constant, '-', '(', instead got "+input(index))
+    error = "ERROR on line " + index + ": expected variable letter, constant, '-', '(', instead got "+input(index)
     TRetNull
   }
 
@@ -83,7 +86,7 @@ class ExpressionParserEnhanced(input: String) {
   def ParseNonExponentF: F = {
     val FRetNull: F = null
     val ConstPattern = "^(\\-|(\\d(\\.))?)\\d+(\\.\\d+)?".r
-    val VarPattern = "[abcdfghijklmnopqrstuvwxyz]".r
+    val VarPattern = "[a-z]".r
     val NumPattern = "[0-9]".r
     val SqrtPattern = "Sqrt\\[".r
 
@@ -97,12 +100,12 @@ class ExpressionParserEnhanced(input: String) {
           currStr = constant.next()
           index += currStr.length
           skipWhiteSpace()
-          Const(currStr.toDouble)
+          Const(currStr.toDouble,eulersNum = false)
         }else if (input(index) == '-' && "[a-zS(]".r.matches(input(index+1).toString)){
           index += 1
-          EP(T(Const(-1), Some(TE(T(ParseF, None), '*'))), None)
+          EP(T(Const(-1, eulersNum = false), Some(TE(T(ParseF, None), '*'))), None)
         }else{
-          println("ERROR: Expected digit at index " + index + " instead found " + input(index))
+          error = "ERROR: Expected digit at index " + index + " instead found " + input(index)
           FRetNull
         }
       case VarPattern() =>
@@ -116,18 +119,31 @@ class ExpressionParserEnhanced(input: String) {
             index += 2
             val returnVal = naturalLog(EP(ParseT, ParseETail))
             if (index == input.length || input(index) != ']') {
-              println("ERROR: Expected ] at index " + index)
+              error = "ERROR: Expected ] at index " + index
               return null
             }
             index += 1
             skipWhiteSpace()
             returnVal
+          }else if(currStr.equals("e")){
+            skipWhiteSpace()
+            Const(-1, eulersNum = true)
           }else {
             skipWhiteSpace()
-            Var(currStr)
+            if(curVar.equals("")){
+              curVar = currStr
+            }
+
+            if(!curVar.equals(currStr)){
+              error = "ERROR: Variable mismatch. Make sure all variables are the same letter variable"
+              curVar = ""
+              FRetNull
+            }else{
+              Var(currStr)
+            }
           }
         }else{
-          println("ERROR: Expected variable letter at index " + index + " instead found " + input(index))
+          error = "ERROR: Expected variable letter at index " + index + " instead found " + input(index)
           FRetNull
         }
       case "(" =>
@@ -135,7 +151,7 @@ class ExpressionParserEnhanced(input: String) {
         skipWhiteSpace()
         val returnedEP = EP(ParseT, ParseETail)
         if(index == input.length || input(index)!=')'){
-          println("ERROR: Expected ) at index " + index)
+          error = "ERROR: Expected ) at index " + index
           return null
         }
         index += 1
@@ -147,9 +163,9 @@ class ExpressionParserEnhanced(input: String) {
           currStr = constant.next()
           index += currStr.length
           skipWhiteSpace()
-          Const(currStr.toDouble)
+          Const(currStr.toDouble,eulersNum = false)
         } else {
-          println("ERROR: Expected digit at index " + index + " instead found " + input(index))
+          error = "ERROR: Expected digit at index " + index + " instead found " + input(index)
           FRetNull
         }
       case "S" =>
@@ -159,19 +175,22 @@ class ExpressionParserEnhanced(input: String) {
           currStr = Sqrt.next()
           index += currStr.length
           skipWhiteSpace()
-          val returnVal = FExp(EP(ParseT,ParseETail), EP(T(Const(1),Some(TE(T(Const(2), None),'/'))), None))
+          val returnVal = FExp(EP(ParseT,ParseETail), EP(T(Const(1,eulersNum = false),Some(TE(T(Const(2,eulersNum = false), None),'/'))), None))
           if(index == input.length || input(index)!=']'){
-            println("ERROR: Expected ] at index " + index)
+            error = "ERROR: Expected ] at index " + index
             return null
           }
           index += 1
           skipWhiteSpace()
           returnVal
         }else{
-          println("ERROR: Expected Sqrt at index " + index + " instead found " + input(index))
+          error = "ERROR: Expected Sqrt at index " + index + " instead found " + input(index)
           FRetNull
         }
 
+      case _ =>
+        error = "ERROR: Expected Sqrt, euler's number, variable, constant, (, or - at index " + index + ", instead found " + input(index)
+        FRetNull
     }
   }
 
@@ -187,7 +206,7 @@ class ExpressionParserEnhanced(input: String) {
     var rightSide: F = null
     if (input(index) == '-' && "[a-zS(]".r.matches(input(index + 1).toString)) {
       index += 1
-      rightSide = EP(T(Const(-1),Some(TE(T(ParseF,None), '*'))),None)
+      rightSide = EP(T(Const(-1, eulersNum = false),Some(TE(T(ParseF,None), '*'))),None)
       FExp(leftSide, rightSide)
     } else {
       FExp(leftSide, ParseF)
