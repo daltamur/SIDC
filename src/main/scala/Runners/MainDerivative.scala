@@ -1,7 +1,7 @@
 package Runners
 
 import com.wolfram.jlink.{KernelLink, MathLinkException}
-import grammarClasses.{E, ExpressionParserEnhanced, full_expression_parser}
+import grammarClasses.{E, ExpressionParserEnhanced}
 
 import java.util.Scanner
 
@@ -58,7 +58,7 @@ object MainDerivative {
           //just to get what the parse error is
           val expr = new ExpressionParserEnhanced(exprVal)//full_expression_parser(exprVal)
           expr.ParseS
-          MainIntegral.main(args)
+          MainDerivative.main(args)
         }
 
       } catch {

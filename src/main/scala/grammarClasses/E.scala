@@ -80,6 +80,18 @@ case class E(l: T, r: Option[Either[E2, E3]]) extends S {
     }
   }
 
+  def checkIfAllConstants: Boolean = {
+    var isAllConstants = true
+    isAllConstants = l.checkIfComposedOfConstants
+    r match {
+      case Some(Left(value)) => isAllConstants = value.l.checkIfAllConstants
+      case Some(Right(value)) => isAllConstants = value.l.checkIfAllConstants
+      case None => //do nothing
+    }
+
+    isAllConstants
+  }
+
   override def getString: String = {
     r match {
       case None =>

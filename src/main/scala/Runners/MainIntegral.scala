@@ -128,6 +128,7 @@ object MainIntegral {
       }
       println(x)
       x.compute()
+      println(x.getIntegrationVal)
       try {
         strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + "]", 0)
         if (strResult.contains("null")) {

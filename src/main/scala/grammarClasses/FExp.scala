@@ -30,19 +30,44 @@ case class FExp(var l: F, var r: F) extends F {
           case _: Const =>
             val exp = r.getParamVal
             var newCoefficient = ""
-            var newExp = 0.0
+            var newExp = ""
             r.getParamVal match {
               case Right(doubleVal) =>
-                newExp = doubleVal + 1.0
-                newCoefficient = "1/" + newExp.toInt
+                newExp = "(" + r.getString() + "+ 1)"
+                newCoefficient = "1/" + newExp
             }
-            integrationVal = "((" + newCoefficient + ")" + value.n +"^" + newExp.toInt+")"
+            integrationVal = "((" + newCoefficient + ")" + value.n +"^" + newExp+")"
+
+          case _: Var =>
+            //nothing we can do with something like x^x
+
+          case _: EP => {
+            // just make sure everything inside there is a constant or euler's number
+            if(r.asInstanceOf[EP].checkIfAllConstants){
+              val exp = r.asInstanceOf[EP].getString
+              if(exp.equals("(-1)")){
+                integrationVal = "ln["+value.n+"]"
+                return
+              }
+              var newCoefficient = ""
+              var newExp = ""
+              newExp = "(" + r.getString() + "+ 1)"
+              newCoefficient = "1/" + newExp
+              integrationVal = "((" + newCoefficient + ")" + value.n + "^" + newExp + ")"
+            }else{
+              println("ERROR! Cannont Integrate an expression of this form...")
+            }
+          }
         }
 
 
       case _: Const => r match {
         //it is gratuitous right now to do it with two constants, so we'll do it if we have x^5 or something like that
         case _: Var =>
+          if(l.asInstanceOf[Const].eulersNum){
+            integrationVal = "e^"+r.asInstanceOf[Var].n
+            return
+          }
           var variableLetter = ""
           var baseValue = 0.0
           r.getParamVal match {
@@ -59,6 +84,29 @@ case class FExp(var l: F, var r: F) extends F {
           }
 
       }
+
+      case _: EP =>
+        r match {
+          case _: EP => {
+            //if we have two expression that are composed of parenthesized expressions, we have to manually check and see
+            //if the parenthesized expression are of integratable forms
+
+            //base is a variable, exponent is a constant
+            if(!l.asInstanceOf[EP].checkIfAllConstants && r.asInstanceOf[EP].checkIfAllConstants){
+              if(l.asInstanceOf[EP].l.l.isInstanceOf[Var]){
+                val exp = r.asInstanceOf[EP].getString
+                var newCoefficient = ""
+                var newExp = ""
+                newExp = "(" + r.getString() + "+ 1)"
+                newCoefficient = "1/" + newExp
+                integrationVal = "((" + newCoefficient + ")" + l.asInstanceOf[EP].l.l.asInstanceOf[Var].n + "^" + newExp + ")"
+              }
+
+            }
+
+          }
+
+        }
 
       case _ =>
     }
@@ -134,6 +182,9 @@ case class FExp(var l: F, var r: F) extends F {
               this.r = (r.asInstanceOf[EP].l.l)
               powerRule(ml)
             }
+
+          case _: naturalLog =>
+            generalizedPowerRule(ml)
         }
 
       case _: EP =>
@@ -160,6 +211,40 @@ case class FExp(var l: F, var r: F) extends F {
             generalizedPowerRule(ml)
         }
 
+
+      case _: naturalLog =>
+        println("Natural Log Base Val")
+        r match {
+          case _: Var =>
+            //Var^Var situation,
+            generalizedPowerRule(ml)
+
+          case _: Const =>
+            //Var^Constant
+            //Simple Power Rule
+            powerRule(ml)
+
+          case _: FExp =>
+            //Var^FEXP
+            //Generalized Power Rule
+            generalizedPowerRule(ml)
+
+          case _: EP =>
+            //this also uses the general power rule, but let's make sure that it isn't just a parenthesized negative number (i.e x^(-2)) since Wolfram will do that
+            if (!r.asInstanceOf[EP].checkIfSingleTerm()) {
+              //Var^EP
+              //Generalized power rule
+              println("gen power rule")
+              generalizedPowerRule(ml)
+            } else {
+              //var^const
+              this.r = (r.asInstanceOf[EP].l.l)
+              powerRule(ml)
+            }
+
+          case _: naturalLog =>
+            generalizedPowerRule(ml)
+        }
 
     }
   }
@@ -221,5 +306,28 @@ case class FExp(var l: F, var r: F) extends F {
       }
     }
     isOneVariable
+  }
+
+  def checkIfAllConstants: Boolean ={
+    var isAllConsts = true
+    l match {
+      case _: Const => isAllConsts = true
+      case _: FExp => isAllConsts = l.asInstanceOf[FExp].checkIfAllConstants
+      case _: naturalLog => isAllConsts = l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants
+      case _: EP => isAllConsts = l.asInstanceOf[EP].checkIfAllConstants
+      case _ => return false
+    }
+
+    if(isAllConsts) {
+      r match {
+        case _: Const => isAllConsts = true
+        case _: FExp => isAllConsts = r.asInstanceOf[FExp].checkIfAllConstants
+        case _: naturalLog => isAllConsts = r.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants
+        case _: EP => isAllConsts = r.asInstanceOf[EP].checkIfAllConstants
+        case _ => isAllConsts = false
+      }
+    }
+
+    isAllConsts
   }
 }

@@ -76,7 +76,21 @@ case class EP(var l: T, var r: Option[Either[E2, E3]]) extends F {
 
    def checkIfSingleTerm(): Boolean = {
     r match {
-      case Some(_) => false
+      case Some(value) => {
+        if(value.isLeft){
+          if(!value.asInstanceOf[Left[E2, E3]].value.l.checkIfAllConstants)
+            false
+          else
+            true
+        }else{
+          if (!value.asInstanceOf[Right[E2, E3]].value.l.checkIfAllConstants)
+            false
+          else
+            true
+        }
+
+
+      }
 
       case None =>
         l.r match {
@@ -105,6 +119,20 @@ case class EP(var l: T, var r: Option[Either[E2, E3]]) extends F {
             '('+l.getString+ '-' + rVal.getString+')'
         }
     }
+  }
+
+  def checkIfAllConstants: Boolean = {
+    var isAllConstants = true
+    isAllConstants = l.checkIfComposedOfConstants
+    if(isAllConstants) {
+      r match {
+        case Some(Left(value)) => isAllConstants = value.l.checkIfAllConstants
+        case Some(Right(value)) => isAllConstants = value.l.checkIfAllConstants
+        case None => //do nothing
+      }
+    }
+
+    isAllConstants
   }
 
   def checkIfJustConstant: Boolean = {
