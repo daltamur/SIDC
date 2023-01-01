@@ -121,6 +121,21 @@ case class EP(var l: T, var r: Option[Either[E2, E3]]) extends F {
     }
   }
 
+  def getStringNoParen: String = {
+    r match {
+      case None =>
+        l.getString
+      case _: Option[Either[E2, E3]] =>
+        val rVal = r.get
+        rVal match {
+          case Left(rVal) =>
+            l.getString + '+' + rVal.getString
+          case Right(rVal) =>
+            l.getString + '-' + rVal.getString
+        }
+    }
+  }
+
   def checkIfAllConstants: Boolean = {
     var isAllConstants = true
     isAllConstants = l.checkIfComposedOfConstants
@@ -144,4 +159,5 @@ case class EP(var l: T, var r: Option[Either[E2, E3]]) extends F {
         l.checkIfJustConstant
     }
   }
+
 }

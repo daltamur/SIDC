@@ -69,18 +69,17 @@ case class FExp(var l: F, var r: F) extends F {
             return
           }
           var variableLetter = ""
-          var baseValue = 0.0
+          var baseValue = ""
           r.getParamVal match {
             case Left(variable) => variableLetter = variable
           }
-          l.getParamVal match {
-            case Right(doubleVal) => baseValue = doubleVal
-          }
-          if(baseValue>0) {
+
+          baseValue = l.getString()
+          if(Integer.parseInt(baseValue)>0) {
             integrationVal = "((" + baseValue + "^" + variableLetter + ")/ln[" + baseValue + "])"
           }else{
-            baseValue = baseValue * -1
-            integrationVal = "(-1*((" + baseValue + "^" + variableLetter + ")/ln[" + baseValue + "]))"
+            var baseValueNum = Integer.parseInt(baseValue) * -1
+            integrationVal = "(-1*((" + baseValueNum + "^" + variableLetter + ")/ln[" + baseValueNum + "]))"
           }
 
       }
@@ -179,7 +178,7 @@ case class FExp(var l: F, var r: F) extends F {
               generalizedPowerRule(ml)
             }else{
               //var^const
-              this.r = (r.asInstanceOf[EP].l.l)
+              //this.r = (r.asInstanceOf[EP].l.l)
               powerRule(ml)
             }
 
@@ -261,6 +260,15 @@ case class FExp(var l: F, var r: F) extends F {
     }
   }
   def powerRule(ml: KernelLink): Unit = {
+
+    if(r.isInstanceOf[EP]){
+      val newExponent = "(" + r.asInstanceOf[EP].getString + "-1" + ")"
+      l.differentiate(ml)
+      differntiationVal = "((" + r.getString() + ")*(" + l.getString() + "^" + newExponent + ")*(" + l.getDifferentiationVal + "))"
+      return
+    }
+
+
     val currentExponent = r.asInstanceOf[Const].v
     val newExponent = currentExponent - 1
     var newExponentString = ""
@@ -329,5 +337,14 @@ case class FExp(var l: F, var r: F) extends F {
     }
 
     isAllConsts
+  }
+
+
+  def negateExponent(): Unit = {
+    val negatedExponent = EP(T(Const(-1, eulersNum = false) ,Some(TE(T(this.r, None), '*'))) ,None)
+    val negateExponentSimplified = Runners.MainIntegral.ml.evaluateToInputForm(negatedExponent.getString, 0)
+    val simplifiedNegatedExponentTree = new ExpressionParserEnhanced(negateExponentSimplified).ParseE
+    val simplifiedNegatedExponentParenthesized = EP(simplifiedNegatedExponentTree.l, simplifiedNegatedExponentTree.r)
+    this.r = simplifiedNegatedExponentParenthesized
   }
 }

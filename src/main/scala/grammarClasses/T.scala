@@ -169,6 +169,10 @@ case class T(var l: F, var r: Option[TE]) extends S {
            default = {
              new ListBuffer[String]
            }) += currentNode.l.asInstanceOf[naturalLog].getString())
+         substitutionMap.put(currentImportance+1, substitutionMap.getOrElse(currentImportance,
+           default = {
+             new ListBuffer[String]
+           }) += currentNode.l.asInstanceOf[naturalLog].innerFuntion.getStringNoParen)
          getNestedUVals(currentNode.l, currentImportance)
          checkTExtension(currentNode.r, currentImportance)
 
@@ -267,7 +271,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
          //         curTerminal.checkIfPossibleSubstitutionRule(curTerminal)
 
        case FExp(l, r) =>
-         if((l.isInstanceOf[Const] && r.isInstanceOf[EP] && !r.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[EP] && r.isInstanceOf[Const] && !l.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[Var] && r.isInstanceOf[Var]) || (l.isInstanceOf[EP] && r.isInstanceOf[EP] && ((!l.asInstanceOf[EP].checkIfAllConstants || !r.asInstanceOf[EP].checkIfAllConstants) && (!l.asInstanceOf[EP].checkIfSingleTerm() && !r.asInstanceOf[EP].checkIfSingleTerm()))) || l.isInstanceOf[Const] && r.isInstanceOf[FExp]){
+         if((l.isInstanceOf[Const] && r.isInstanceOf[EP] && !r.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[EP] && r.isInstanceOf[Const] && !l.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[Var] && r.isInstanceOf[Var]) || (l.isInstanceOf[EP] && r.isInstanceOf[EP] && (((!l.asInstanceOf[EP].checkIfAllConstants && r.asInstanceOf[EP].checkIfAllConstants) || (!r.asInstanceOf[EP].checkIfAllConstants && l.asInstanceOf[EP].checkIfAllConstants)) && (!l.asInstanceOf[EP].checkIfSingleTerm() && !r.asInstanceOf[EP].checkIfSingleTerm()))) || l.isInstanceOf[Const] && r.isInstanceOf[FExp]){
            true
          }else{
            if((l.isInstanceOf[naturalLog] && !l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants) || (r.isInstanceOf[naturalLog] && !r.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants)){
@@ -277,6 +281,14 @@ case class T(var l: F, var r: Option[TE]) extends S {
          }
 
        //every other case, so long as there is multiplication or division happening, there is the possisbility of the substitution rule
+       case _: naturalLog=>
+         if (!l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants && !l.asInstanceOf[naturalLog].innerFuntion.checkIfSingleTerm()) {
+           true
+         }else{
+           false
+         }
+
+
        case _ =>
          curTerm.r match {
            case Some(_) => true
@@ -335,12 +347,19 @@ case class T(var l: F, var r: Option[TE]) extends S {
         x = expr.ParseE
         if(expr.error.isBlank) {
           var allOneVar: Boolean = true
+          var simiplifiedValTestString = x.getString
+          if (localSubValIsU) {
+            simiplifiedValTestString = x.getString.replace("u", MainIntegral.curVar.toString)
+          } else {
+            simiplifiedValTestString = x.getString.replace("v", MainIntegral.curVar.toString)
+          }
           if (localSubValIsU) {
             allOneVar = x.asInstanceOf[E].checkAllOneVar("u")
           } else {
             allOneVar = x.asInstanceOf[E].checkAllOneVar("v")
           }
-          if (allOneVar) {
+          //(-1/2*1)*-1*(e^(-1*x^(-2)))
+          if (allOneVar && !this.getString.equals(simiplifiedValTestString)) {
             expr = new ExpressionParserEnhanced(simplifiedVal) //full_expression_parser(simplifiedVal)
             x = expr.ParseE
             x.asInstanceOf[E].compute()
@@ -379,6 +398,10 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
     if(checkIfPossibleSubstitutionRule(this)) {
       runIntegralSubRule()
+      if(integrationVal==null){
+        println("couldn't run sub rule with " + this.getString)
+        RunElementaryIntegration()
+      }
     }else {
       RunElementaryIntegration()
     }
@@ -400,7 +423,101 @@ case class T(var l: F, var r: Option[TE]) extends S {
                 r.l.compute()
                 integrationVal = l.getString() + r.operation + "(" + r.l.getIntegrationVal + ")"
               }else{
+                //(2x^3+x)/(x^4+x^2+3)^(1/3)
                 //we have division
+                val numerator = l.getString()
+                //build the denominator
+                var coefficient = ""
+                var denominator = ""
+                var newTerm: T = null
+                var curFactor = r.l
+                if(r.l.l.isInstanceOf[EP] && r.l.r.isEmpty) {
+                  curFactor = r.l.l.asInstanceOf[EP].l
+                }
+                  while(curFactor != null){
+                    curFactor.l match {
+                      case value: EP =>
+                        if(value.checkIfAllConstants){
+                          if(denominator.equals("")){
+                            denominator = value.getString
+                          }else{
+                            denominator += "*" + value.getString
+                          }
+                        }else{
+                          val invertedValue = FExp(value, EP(T( Const(-1, eulersNum = false),None),None))
+                          if (newTerm == null) {
+                            newTerm = T(invertedValue, None)
+                          } else {
+                            newTerm.r = addMultiple(newTerm.r, invertedValue)
+                          }
+                        }
+
+                      case value: Const =>
+                        if (denominator.equals("")) {
+                          denominator = value.getString()
+                        } else {
+                          denominator += "*" + value.getString
+                        }
+
+                      case value: naturalLog =>
+                        if (value.innerFuntion.checkIfAllConstants) {
+                          if (denominator.equals("")) {
+                            denominator = value.getString()
+                          } else {
+                            denominator += "*" + value.getString
+                          }
+                        } else {
+                          val invertedValue = FExp(value, EP(T(Const(-1, eulersNum = false), None), None))
+                          if (newTerm == null) {
+                            newTerm = T(invertedValue, None)
+                          } else {
+                            newTerm.r = addMultiple(newTerm.r, invertedValue)
+                          }
+                        }
+
+                      case value: Var =>
+                        val invertedValue = FExp(value, EP(T(Const(-1, eulersNum = false), None), None))
+                        if (newTerm == null) {
+                          newTerm = T(invertedValue, None)
+                        } else {
+                          newTerm.r = addMultiple(newTerm.r, invertedValue)
+                        }
+
+                      case value: FExp =>
+                        if (value.checkIfAllConstants) {
+                          if (denominator.equals("")) {
+                            denominator = value.getString
+                          } else {
+                            denominator += "*" + value.getString
+                          }
+                        } else {
+                          val invertedValue = value
+                          invertedValue.negateExponent()
+                          if (newTerm == null) {
+                            newTerm = T(invertedValue, None)
+                          } else {
+                            newTerm.r = addMultiple(newTerm.r, invertedValue)
+                          }
+                        }
+                    }
+                    if(curFactor.r.isDefined){
+                      curFactor = curFactor.r.get.l
+                    }else{
+                      curFactor = null
+                    }
+                  }
+
+                  println("Inverted vars:")
+                  println(newTerm.getString)
+                  if (!denominator.equals("")) {
+                    coefficient = "(" + numerator + "/" + denominator + ")"
+                  } else {
+                    coefficient = "(" + numerator + ")"
+                  }
+
+                  newTerm.compute()
+                  integrationVal = coefficient + "*" + newTerm.getIntegrationVal
+
 
               }
             }
@@ -409,11 +526,18 @@ case class T(var l: F, var r: Option[TE]) extends S {
                 case _: Const =>
                   r.operation match {
                     case '*' => exponentRule()
+                    case '/' =>
+                      l.runCompute()
+                      integrationVal = l.getIntegrationVal + "/" + r.l.getString
                   }
               }
 
-            case _ =>
-              println("You've met with a terrible fate")
+            case _: EP =>
+              if(l.asInstanceOf[EP].checkIfAllConstants){
+                r.l.compute()
+                integrationVal = l.getString() + r.operation + r.l.integrationVal
+              }
+
 
           }
 
@@ -448,6 +572,16 @@ case class T(var l: F, var r: Option[TE]) extends S {
           //println(currentNumber)
           false
       }
+    }
+  }
+
+
+  def addMultiple(curTerm: Option[TE], addedValue: F): Option[TE] = {
+    if(curTerm.isDefined){
+      curTerm.get.l.r = addMultiple(curTerm.get.l.r, addedValue)
+      curTerm
+    }else{
+      Some(TE(T(addedValue, None), '*'))
     }
   }
 
@@ -527,7 +661,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
               case _: FExp =>
                 value.l.l.asInstanceOf[FExp].r match {
                   case ep: EP =>
-                    value.l.l.asInstanceOf[FExp].r = EP(T(Const(-1.0,eulersNum = false), Some(TE(T(ep, None), '*'))), None)
+                    value.l.l.asInstanceOf[FExp].negateExponent()
                     println(value.l.l.getString())
                   //exponent value is an exponent itself, do -1*(exponent value)
                   case exp: FExp =>
@@ -544,6 +678,10 @@ case class T(var l: F, var r: Option[TE]) extends S {
                     println(value.l.l.getString())
 
                 }
+                value.l.l.asInstanceOf[FExp].differentiate(ml)
+                differntiationVal = "(" + l.getString() + ")*(" + value.l.l.getDifferentiationVal + ")"
+                println(differntiationVal)
+
               //dividing by a parenthesized expression with no exponent attached to it
            case expression: EP =>
              value.l.l =  FExp(expression,Const(-1.0, false))
@@ -558,6 +696,17 @@ case class T(var l: F, var r: Option[TE]) extends S {
              value.l.l.asInstanceOf[FExp].differentiate(ml)
              differntiationVal = "("+l.getString() + ")*(" + value.l.l.getDifferentiationVal+")"
              println(differntiationVal)
+
+
+//            case variable: FExp =>
+//                variable.negateExponent()
+//                value.l.l = variable
+//                value.l.l.asInstanceOf[FExp].differentiate(ml)
+//                differntiationVal = "(" + l.getString() + ")*(" + value.l.l.getDifferentiationVal + ")"
+//                println(differntiationVal)
+
+
+
 
 
             }

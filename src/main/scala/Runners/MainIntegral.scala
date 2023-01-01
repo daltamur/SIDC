@@ -120,6 +120,7 @@ object MainIntegral {
         MainIntegral.main(args)
         return
       }
+      curVar = expr.curVar
 
       if(expr.curVar.equals("u") || expr.curVar.equals("v")){
         println("ERROR: Variable letter " + expr.curVar + " is protected. Use variable letters that are not u or v.")
