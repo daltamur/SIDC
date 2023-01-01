@@ -252,11 +252,12 @@ case class T(var l: F, var r: Option[TE]) extends S {
          }
 
        case EP(_,_) =>
-         if(!curTerm.l.asInstanceOf[EP].checkIfAllConstants && !curTerm.l.asInstanceOf[EP].checkIfSingleTerm()){
+         if(!curTerm.l.asInstanceOf[EP].checkIfAllConstants && !curTerm.l.asInstanceOf[EP].checkIfSingleTerm() && isJustExponent(this)){
            true
          }else{
            false
          }
+         //x/Sqrt[3*x^2-5]
          //         var curTerminal = curTerm.l.asInstanceOf[EP].l
          //         var curTail = curTerm.l.asInstanceOf[EP].r
          //         while (!curTerminal.checkIfPossibleSubstitutionRule(curTerminal) && curTail.isDefined) {
@@ -271,7 +272,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
          //         curTerminal.checkIfPossibleSubstitutionRule(curTerminal)
 
        case FExp(l, r) =>
-         if((l.isInstanceOf[Const] && r.isInstanceOf[EP] && !r.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[EP] && r.isInstanceOf[Const] && !l.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[Var] && r.isInstanceOf[Var]) || (l.isInstanceOf[EP] && r.isInstanceOf[EP] && (((!l.asInstanceOf[EP].checkIfAllConstants && r.asInstanceOf[EP].checkIfAllConstants) || (!r.asInstanceOf[EP].checkIfAllConstants && l.asInstanceOf[EP].checkIfAllConstants)) && (!l.asInstanceOf[EP].checkIfSingleTerm() || !r.asInstanceOf[EP].checkIfSingleTerm()))) && this.isJustExponent(this)|| l.isInstanceOf[Const] && r.isInstanceOf[FExp]){
+         if((l.isInstanceOf[Const] && r.isInstanceOf[EP] && !r.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[EP] && r.isInstanceOf[Const] && !l.asInstanceOf[EP].checkIfAllConstants) || (l.isInstanceOf[Var] && r.isInstanceOf[Var]) || (l.isInstanceOf[EP] && r.isInstanceOf[EP] && (((!l.asInstanceOf[EP].checkIfAllConstants && r.asInstanceOf[EP].checkIfAllConstants) || (!r.asInstanceOf[EP].checkIfAllConstants && l.asInstanceOf[EP].checkIfAllConstants)) && (!l.asInstanceOf[EP].checkIfSingleTerm() || !r.asInstanceOf[EP].checkIfSingleTerm()))) && (this.isJustExponent(this) || !l.asInstanceOf[EP].checkIfSingleTerm())|| l.isInstanceOf[Const] && r.isInstanceOf[FExp]){
            true
          }else{
            if((l.isInstanceOf[naturalLog] && !l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants) || (r.isInstanceOf[naturalLog] && !r.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants)){
@@ -552,6 +553,17 @@ case class T(var l: F, var r: Option[TE]) extends S {
                       integrationVal = l.getIntegrationVal + "/" + r.l.getString
                   }
               }
+
+            case value: FExp =>
+              if(!value.checkIfAllConstants){
+                //an elementary integral with a non-constant FEXP can only work if it is being divided by an all-constant denominator
+                if(r.l.checkIfComposedOfConstants && r.operation == '/'){
+                  value.compute()
+                  integrationVal = "(" + value.getIntegrationVal + ")/("+r.l.getString+")"
+                }
+              }
+
+
 
             case _: EP =>
               if(l.asInstanceOf[EP].checkIfAllConstants){
@@ -997,6 +1009,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
 
       if (exponentFound && otherTermFound) {
+        println("in luck")
         return true
       } else if (curVal.r.isDefined) {
         curVal = curVal.r.get.l

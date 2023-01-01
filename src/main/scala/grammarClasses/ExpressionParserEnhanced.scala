@@ -10,6 +10,7 @@ class ExpressionParserEnhanced(input: String) {
       //first set match passes, do not index past anything yet though
       val returnVal = ParseE
       curVar = ""
+      skipWhiteSpace()
       if(index != input.length && input(index) != '\n'){
         println("ERROR expected end of input at "+index+ " instead got "+input(index))
         return null
@@ -196,6 +197,7 @@ class ExpressionParserEnhanced(input: String) {
 
   def ParseF: F = {
     val leftSide = ParseNonExponentF
+    skipWhiteSpace()
     if(index == input.length || input(index) != '^'){
       return leftSide
     }
@@ -206,7 +208,9 @@ class ExpressionParserEnhanced(input: String) {
     var rightSide: F = null
     if (input(index) == '-' && "[a-zS(]".r.matches(input(index + 1).toString)) {
       index += 1
+      skipWhiteSpace()
       rightSide = EP(T(Const(-1, eulersNum = false),Some(TE(T(ParseF,None), '*'))),None)
+      skipWhiteSpace()
       FExp(leftSide, rightSide)
     } else {
       FExp(leftSide, ParseF)
