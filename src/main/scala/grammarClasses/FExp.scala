@@ -107,6 +107,11 @@ case class FExp(var l: F, var r: F) extends F {
 
         }
 
+      case value: naturalLog =>
+        if( value.innerFuntion.isJustSingleVar && r.isInstanceOf[EP] && r.asInstanceOf[EP].getStringNoParen.equals("-1")){
+          integrationVal = "LogIntegral["+value.innerFuntion.getStringNoParen+"]"
+        }
+
       case _ =>
     }
 

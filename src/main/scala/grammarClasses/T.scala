@@ -252,7 +252,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
          }
 
        case EP(_,_) =>
-         if(!curTerm.l.asInstanceOf[EP].checkIfAllConstants && !curTerm.l.asInstanceOf[EP].checkIfSingleTerm() && isJustExponent(this)){
+         if(!curTerm.l.asInstanceOf[EP].checkIfAllConstants && !curTerm.l.asInstanceOf[EP].checkIfSingleTerm() && (isJustExponent(this) || !curTerm.l.asInstanceOf[EP].checkIfSingleTerm())){
            true
          }else{
            false
@@ -286,10 +286,18 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
        //every other case, so long as there is multiplication or division happening, there is the possisbility of the substitution rule
        case _: naturalLog=>
-         if (!l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants && !l.asInstanceOf[naturalLog].innerFuntion.checkIfSingleTerm()) {
+         if (!curTerm.l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants && !curTerm.l.asInstanceOf[naturalLog].innerFuntion.isJustSingleVar) {
            true
          }else{
-           false
+           curTerm.r match {
+             case Some(_) =>
+               if(!curTerm.r.get.l.checkIfComposedOfConstants){
+                 true
+               }else{
+                 false
+               }
+             case _ => false
+           }
          }
 
 
@@ -417,11 +425,6 @@ case class T(var l: F, var r: Option[TE]) extends S {
     }else {
       RunElementaryIntegration()
     }
-  }
-
-
-  private def IntegrateFraction(): Unit = {
-
   }
 
     private def RunElementaryIntegration(): Unit = {
@@ -563,7 +566,14 @@ case class T(var l: F, var r: Option[TE]) extends S {
                 }
               }
 
-
+            case value: naturalLog =>
+              if (!value.innerFuntion.checkIfAllConstants) {
+                //an elementary integral with a non-constant FEXP can only work if it is being divided by an all-constant denominator
+                if (r.l.checkIfComposedOfConstants && r.operation == '/') {
+                  value.compute()
+                  integrationVal = "(" + value.getIntegrationVal + ")/(" + r.l.getString + ")"
+                }
+              }
 
             case _: EP =>
               if(l.asInstanceOf[EP].checkIfAllConstants){
@@ -1009,7 +1019,6 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
 
       if (exponentFound && otherTermFound) {
-        println("in luck")
         return true
       } else if (curVal.r.isDefined) {
         curVal = curVal.r.get.l

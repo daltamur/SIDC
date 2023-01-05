@@ -101,6 +101,7 @@ case class EP(var l: T, var r: Option[Either[E2, E3]]) extends F {
               case _: Var => true
               case _: FExp => true
               case _: EP => l.l.asInstanceOf[EP].checkIfSingleTerm()
+              case _: naturalLog => false
             }
         }
     }
@@ -148,6 +149,14 @@ case class EP(var l: T, var r: Option[Either[E2, E3]]) extends F {
     }
 
     isAllConstants
+  }
+
+  def isJustSingleVar: Boolean = {
+    if(l.l.isInstanceOf[Var] && l.r.isEmpty && r.isEmpty){
+      true
+    }else{
+      false
+    }
   }
 
   def checkIfJustConstant: Boolean = {
