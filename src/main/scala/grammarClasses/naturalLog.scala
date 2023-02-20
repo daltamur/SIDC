@@ -8,6 +8,10 @@ case class naturalLog(innerFuntion: EP) extends F{
   override def runCompute(): Unit = compute()
 
   override def getString(): String = {
+    if(innerFuntion.getString.equals("(e)")){
+      return "1"
+    }
+
     if(innerFuntion.r.isDefined){
       if(innerFuntion.r.get.isLeft){
         return "ln["+innerFuntion.l.getString+"+"+innerFuntion.r.get.asInstanceOf[Left[E2, E3]].value.getString+"]"
@@ -27,12 +31,8 @@ case class naturalLog(innerFuntion: EP) extends F{
   override def getIntegrationVal: String = integrationVal
 
   override def differentiate(ml: KernelLink): Unit = {
-    if(!innerFuntion.l.checkIfNegativeConstant) {
-      innerFuntion.differentiate(ml)
-      differntiationVal = "(1/" + innerFuntion.getString + ")*" + innerFuntion.getDifferentiationVal
-    }else{
-      differntiationVal = null
-    }
+    innerFuntion.differentiate(ml)
+    differntiationVal = "(1/" + innerFuntion.getString + ")*" + innerFuntion.getDifferentiationVal
   }
 
   override def compute(): Unit = {

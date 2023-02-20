@@ -253,7 +253,7 @@ case class FExp(var l: F, var r: F) extends F {
     }
   }
 
-  def generalizedPowerRule(ml: KernelLink): Unit = {
+  private def generalizedPowerRule(ml: KernelLink): Unit = {
     //make the (ln[u(x)]*v(x)) term
     val rightSideTerm = T(naturalLog(EP(T(l, None), None)), Some(TE(T(this.r, None), '*')))
     rightSideTerm.differentiate(ml)
@@ -264,7 +264,7 @@ case class FExp(var l: F, var r: F) extends F {
       differntiationVal = null
     }
   }
-  def powerRule(ml: KernelLink): Unit = {
+  private def powerRule(ml: KernelLink): Unit = {
 
     if(r.isInstanceOf[EP]){
       val newExponent = "(" + r.asInstanceOf[EP].getString + "-1" + ")"
