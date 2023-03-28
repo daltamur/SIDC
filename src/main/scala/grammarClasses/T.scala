@@ -13,6 +13,9 @@ case class T(var l: F, var r: Option[TE]) extends S {
   override var integrationVal: String = _
   override var differntiationVal: String = _
   private val substitutionMap = new mutable.HashMap[Int, ListBuffer[String]]()
+  private val substitutionQueue = new mutable.PriorityQueue[(Int, String)]()(Ordering.by(ascendingOrder))
+
+  private def ascendingOrder(tuple2: (Int, String)): Int = -tuple2._1
 
   override def eval(): Unit = {
     //print("<Start T>")
@@ -116,6 +119,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
           default = {
             new ListBuffer[String]
           }) += currentNode.asInstanceOf[EP].getString())
+        substitutionQueue += Tuple2(currentImportance, currentNode.asInstanceOf[EP].getString())
         getPossibleUValues(currentNode.asInstanceOf[EP].l, currentImportance+1)
         checkEExtension(currentNode.asInstanceOf[EP].r, currentImportance+1)
 
@@ -127,6 +131,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
               default = {
                 new ListBuffer[String]
               }) += value.l.getString())
+            substitutionQueue += Tuple2(currentImportance, value.l.getString())
             getPossibleUValues(ep.l, currentImportance + 1)
             checkEExtension(ep.r, currentImportance + 1)
           case _ =>
@@ -139,6 +144,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
               default = {
                 new ListBuffer[String]
               }) += value.r.getString())
+            substitutionQueue += Tuple2(currentImportance, value.r.getString())
             getPossibleUValues(ep.l, currentImportance + 1)
             checkEExtension(ep.r, currentImportance + 1)
 
@@ -148,6 +154,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
               default = {
                 new ListBuffer[String]
               }) += fexp.getString())
+            substitutionQueue += Tuple2(currentImportance, fexp.getString())
             getNestedUVals(fexp, currentImportance + 1)
 
           case _ =>
@@ -172,10 +179,12 @@ case class T(var l: F, var r: Option[TE]) extends S {
           default = {
             new ListBuffer[String]
           }) += currentNode.l.asInstanceOf[naturalLog].getString())
+        substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[naturalLog].getString())
         substitutionMap.put(currentImportance+1, substitutionMap.getOrElse(currentImportance,
           default = {
             new ListBuffer[String]
           }) += currentNode.l.asInstanceOf[naturalLog].innerFuntion.getStringNoParen)
+        substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[naturalLog].innerFuntion.getStringNoParen)
         getNestedUVals(currentNode.l, currentImportance)
         checkTExtension(currentNode.r, currentImportance)
 
@@ -186,12 +195,14 @@ case class T(var l: F, var r: Option[TE]) extends S {
           default = {
             new ListBuffer[String]
           }) += currentNode.l.asInstanceOf[FExp].getString())
+        substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].getString())
         if(currentNode.l.asInstanceOf[FExp].l.isInstanceOf[naturalLog] && !currentNode.l.asInstanceOf[FExp].l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants){
           println("U value at: " + currentNode.l.asInstanceOf[FExp].l.getString())
           substitutionMap.put(currentImportance+1, substitutionMap.getOrElse(currentImportance,
             default = {
               new ListBuffer[String]
             }) += currentNode.l.asInstanceOf[FExp].l.getString())
+          substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].l.getString())
         }
 
         if (currentNode.l.asInstanceOf[FExp].r.isInstanceOf[naturalLog] && !currentNode.l.asInstanceOf[FExp].r.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants) {
@@ -200,6 +211,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
             default = {
               new ListBuffer[String]
             }) += currentNode.l.asInstanceOf[FExp].r.getString())
+          substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].r.getString())
         }
         getNestedUVals(currentNode.l.asInstanceOf[FExp].l,currentImportance)
         if(currentNode.l.asInstanceOf[FExp].r.isInstanceOf[FExp]){
@@ -208,6 +220,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
             default = {
               new ListBuffer[String]
             })+=currentNode.l.asInstanceOf[FExp].r.getString())
+          substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].r.getString())
         }
         getNestedUVals(currentNode.l.asInstanceOf[FExp].r, currentImportance+1)
         checkTExtension(currentNode.r, currentImportance)
@@ -331,78 +344,149 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
   private def runIntegralSubRule(): Unit = {
     getPossibleUValues(this, 0)
-    //iterate through substitution map keys
-    for(subKey <- substitutionMap.keys.toList.sorted.reverse){
-      //get the substitution vals at each key
-      for(subVal <- substitutionMap(subKey).distinct.toList){
-        var localSubValIsU = true
-        println("Sub Val: " + subVal)
-        var subExpression: String = null
-        if(MainIntegral.subIsU) {
-          println(this.getString.replace(subVal, "u"))
-          subExpression = this.getString.replace(subVal, "u")
-          MainIntegral.subIsU = false
-        }else{
-          println(this.getString.replace(subVal, "v"))
-          subExpression = this.getString.replace(subVal, "v")
-          MainIntegral.subIsU = true
-          localSubValIsU = false
-        }
-        //take the string, make an expression, and get the derivative of it.
-        var simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
-        var expr = new ExpressionParserEnhanced(simplifiedVal)//full_expression_parser(simplifiedVal)
-        var x = expr.ParseS
-        x.asInstanceOf[E].differentiate(MainIntegral.ml)
-        val subDeriv =  MainIntegral.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
-        println("Sub-Value Derivative: " + subDeriv)
-        val rewrittenExpression = "(" + subExpression + ") * (1/(" + subDeriv + "))"
-        println("Substituted Val: " +  MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
-        simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n"
-        expr = new ExpressionParserEnhanced(simplifiedVal)
-        x = expr.ParseE
-        if(expr.error.isBlank) {
-          var allOneVar: Boolean = true
-          var curString = this.getString
-          var simiplifiedValTestString = x.getString
-          //get the variable letter
-          val curExpression = new ExpressionParserEnhanced(this.getString)
-          curExpression.ParseE
+    while(!substitutionQueue.isEmpty){
+      val subVal = substitutionQueue.dequeue()._2
+      var localSubValIsU = true
+      println("Sub Val: " + subVal)
+      var subExpression: String = null
+      if (MainIntegral.subIsU) {
+        println(this.getString.replace(subVal, "u"))
+        subExpression = this.getString.replace(subVal, "u")
+        MainIntegral.subIsU = false
+      } else {
+        println(this.getString.replace(subVal, "v"))
+        subExpression = this.getString.replace(subVal, "v")
+        MainIntegral.subIsU = true
+        localSubValIsU = false
+      }
+      //take the string, make an expression, and get the derivative of it.
+      var simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
+      var expr = new ExpressionParserEnhanced(simplifiedVal) //full_expression_parser(simplifiedVal)
+      var x = expr.ParseS
+      x.asInstanceOf[E].differentiate(MainIntegral.ml)
+      val subDeriv = MainIntegral.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
+      println("Sub-Value Derivative: " + subDeriv)
+      val rewrittenExpression = "(" + subExpression + ") * (1/(" + subDeriv + "))"
+      println("Substituted Val: " + MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
+      simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n"
+      expr = new ExpressionParserEnhanced(simplifiedVal)
+      x = expr.ParseE
+      if (expr.error.isBlank) {
+        var allOneVar: Boolean = true
+        var curString = this.getString
+        var simiplifiedValTestString = x.getString
+        //get the variable letter
+        val curExpression = new ExpressionParserEnhanced(this.getString)
+        curExpression.ParseE
 
-          if (localSubValIsU) {
-            simiplifiedValTestString = x.getString.replace("u", curExpression.curVar)
-          } else {
-            simiplifiedValTestString = x.getString.replace("v", curExpression.curVar)
-          }
-          if (localSubValIsU) {
-            allOneVar = x.asInstanceOf[E].checkAllOneVar("u")
-          } else {
-            allOneVar = x.asInstanceOf[E].checkAllOneVar("v")
-          }
-          //(-1/2*1)*-1*(e^(-1*x^(-2)))
-          //(2x^3+x)/(x^4+x^2+3)^(1/3)
-          //(2xln[x^2+5)]/(x^2+5)
-          if (allOneVar && !MainIntegral.ml.evaluateToInputForm(this.getString, 0).equals(MainIntegral.ml.evaluateToInputForm(simiplifiedValTestString, 0))) {
-            expr = new ExpressionParserEnhanced(simplifiedVal) //full_expression_parser(simplifiedVal)
-            x = expr.ParseE
-            x.asInstanceOf[E].compute()
-            if (x.getIntegrationVal != null && !x.getIntegrationVal.contains("null")) {
-              if (localSubValIsU) {
-                integrationVal = "(" + x.getIntegrationVal.replace("u", "(" + subVal + ")") + ")"
-                return
-              } else {
-                integrationVal = "(" + x.getIntegrationVal.replace("v", "(" + subVal + ")") + ")"
-                return
-              }
+        if (localSubValIsU) {
+          simiplifiedValTestString = x.getString.replace("u", curExpression.curVar)
+        } else {
+          simiplifiedValTestString = x.getString.replace("v", curExpression.curVar)
+        }
+        if (localSubValIsU) {
+          allOneVar = x.asInstanceOf[E].checkAllOneVar("u")
+        } else {
+          allOneVar = x.asInstanceOf[E].checkAllOneVar("v")
+        }
+        //(-1/2*1)*-1*(e^(-1*x^(-2)))
+        //(2x^3+x)/(x^4+x^2+3)^(1/3)
+        //(2xln[x^2+5)]/(x^2+5)
+        if (allOneVar && !MainIntegral.ml.evaluateToInputForm(this.getString, 0).equals(MainIntegral.ml.evaluateToInputForm(simiplifiedValTestString, 0))) {
+          expr = new ExpressionParserEnhanced(simplifiedVal) //full_expression_parser(simplifiedVal)
+          x = expr.ParseE
+          x.asInstanceOf[E].compute()
+          if (x.getIntegrationVal != null && !x.getIntegrationVal.contains("null")) {
+            if (localSubValIsU) {
+              integrationVal = "(" + x.getIntegrationVal.replace("u", "(" + subVal + ")") + ")"
+              return
+            } else {
+              integrationVal = "(" + x.getIntegrationVal.replace("v", "(" + subVal + ")") + ")"
+              return
             }
           }
-        }else{
-          println("Won't work")
-          //(2x)/(1+x^2)^3
-          localSubValIsU = !localSubValIsU
-          MainIntegral.subIsU = !MainIntegral.subIsU
         }
+      } else {
+        println("Won't work")
+        //(2x)/(1+x^2)^3
+        localSubValIsU = !localSubValIsU
+        MainIntegral.subIsU = !MainIntegral.subIsU
       }
     }
+
+
+//    //iterate through substitution map keys
+//    for(subKey <- substitutionMap.keys.toList.sorted.reverse){
+//      //get the substitution vals at each key
+//      for(subVal <- substitutionMap(subKey).distinct.toList){
+//        var localSubValIsU = true
+//        println("Sub Val: " + subVal)
+//        var subExpression: String = null
+//        if(MainIntegral.subIsU) {
+//          println(this.getString.replace(subVal, "u"))
+//          subExpression = this.getString.replace(subVal, "u")
+//          MainIntegral.subIsU = false
+//        }else{
+//          println(this.getString.replace(subVal, "v"))
+//          subExpression = this.getString.replace(subVal, "v")
+//          MainIntegral.subIsU = true
+//          localSubValIsU = false
+//        }
+//        //take the string, make an expression, and get the derivative of it.
+//        var simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + subVal + "]", 0) + "\n"
+//        var expr = new ExpressionParserEnhanced(simplifiedVal)//full_expression_parser(simplifiedVal)
+//        var x = expr.ParseS
+//        x.asInstanceOf[E].differentiate(MainIntegral.ml)
+//        val subDeriv =  MainIntegral.ml.evaluateToInputForm("Simplify[" + x.getDifferentiationVal + "]", 0) + "\n"
+//        println("Sub-Value Derivative: " + subDeriv)
+//        val rewrittenExpression = "(" + subExpression + ") * (1/(" + subDeriv + "))"
+//        println("Substituted Val: " +  MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n")
+//        simplifiedVal = MainIntegral.ml.evaluateToInputForm("Simplify[" + rewrittenExpression + "]", 0) + "\n"
+//        expr = new ExpressionParserEnhanced(simplifiedVal)
+//        x = expr.ParseE
+//        if(expr.error.isBlank) {
+//          var allOneVar: Boolean = true
+//          var curString = this.getString
+//          var simiplifiedValTestString = x.getString
+//          //get the variable letter
+//          val curExpression = new ExpressionParserEnhanced(this.getString)
+//          curExpression.ParseE
+//
+//          if (localSubValIsU) {
+//            simiplifiedValTestString = x.getString.replace("u", curExpression.curVar)
+//          } else {
+//            simiplifiedValTestString = x.getString.replace("v", curExpression.curVar)
+//          }
+//          if (localSubValIsU) {
+//            allOneVar = x.asInstanceOf[E].checkAllOneVar("u")
+//          } else {
+//            allOneVar = x.asInstanceOf[E].checkAllOneVar("v")
+//          }
+//          //(-1/2*1)*-1*(e^(-1*x^(-2)))
+//          //(2x^3+x)/(x^4+x^2+3)^(1/3)
+//          //(2xln[x^2+5)]/(x^2+5)
+//          if (allOneVar && !MainIntegral.ml.evaluateToInputForm(this.getString, 0).equals(MainIntegral.ml.evaluateToInputForm(simiplifiedValTestString, 0))) {
+//            expr = new ExpressionParserEnhanced(simplifiedVal) //full_expression_parser(simplifiedVal)
+//            x = expr.ParseE
+//            x.asInstanceOf[E].compute()
+//            if (x.getIntegrationVal != null && !x.getIntegrationVal.contains("null")) {
+//              if (localSubValIsU) {
+//                integrationVal = "(" + x.getIntegrationVal.replace("u", "(" + subVal + ")") + ")"
+//                return
+//              } else {
+//                integrationVal = "(" + x.getIntegrationVal.replace("v", "(" + subVal + ")") + ")"
+//                return
+//              }
+//            }
+//          }
+//        }else{
+//          println("Won't work")
+//          //(2x)/(1+x^2)^3
+//          localSubValIsU = !localSubValIsU
+//          MainIntegral.subIsU = !MainIntegral.subIsU
+//        }
+//      }
+//    }
   }
 
   def compute(): Unit = {
