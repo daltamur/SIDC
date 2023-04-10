@@ -80,7 +80,7 @@ object MainDerivative {
       try {
         strResult = ml.evaluateToOutputForm("Simplify[" + x.getDifferentiationVal + "]", 0)
         if (strResult.contains("null")) {
-          println("Something went wrong")
+          println("Could not differentiate given expression")
         } else {
           println(strResult)
         }

@@ -12,7 +12,7 @@ import scala.annotation.tailrec
 case class T(var l: F, var r: Option[TE]) extends S {
   override var integrationVal: String = _
   override var differntiationVal: String = _
-  private val substitutionMap = new mutable.HashMap[Int, ListBuffer[String]]()
+  //private val substitutionMap = new mutable.HashMap[Int, ListBuffer[String]]()
   private val substitutionQueue = new mutable.PriorityQueue[(Int, String)]()(Ordering.by(ascendingOrder))
 
   private def ascendingOrder(tuple2: (Int, String)): Int = -tuple2._1
@@ -115,10 +115,10 @@ case class T(var l: F, var r: Option[TE]) extends S {
     currentNode match {
       case _: EP =>
         println("U value at: "+currentNode.getString())
-        substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
-          default = {
-            new ListBuffer[String]
-          }) += currentNode.asInstanceOf[EP].getString())
+//        substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+//          default = {
+//            new ListBuffer[String]
+//          }) += currentNode.asInstanceOf[EP].getString())
         substitutionQueue += Tuple2(currentImportance, currentNode.asInstanceOf[EP].getString())
         getPossibleUValues(currentNode.asInstanceOf[EP].l, currentImportance+1)
         checkEExtension(currentNode.asInstanceOf[EP].r, currentImportance+1)
@@ -127,10 +127,10 @@ case class T(var l: F, var r: Option[TE]) extends S {
         value.l match {
           case ep: EP =>
             println("U value at: " + value.l.getString())
-            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
-              default = {
-                new ListBuffer[String]
-              }) += value.l.getString())
+//            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+//              default = {
+//                new ListBuffer[String]
+//              }) += value.l.getString())
             substitutionQueue += Tuple2(currentImportance, value.l.getString())
             getPossibleUValues(ep.l, currentImportance + 1)
             checkEExtension(ep.r, currentImportance + 1)
@@ -140,20 +140,20 @@ case class T(var l: F, var r: Option[TE]) extends S {
         value.r match {
           case ep: EP =>
             println("U value at: " + value.r.getString())
-            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
-              default = {
-                new ListBuffer[String]
-              }) += value.r.getString())
+//            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+//              default = {
+//                new ListBuffer[String]
+//              }) += value.r.getString())
             substitutionQueue += Tuple2(currentImportance, value.r.getString())
             getPossibleUValues(ep.l, currentImportance + 1)
             checkEExtension(ep.r, currentImportance + 1)
 
           case fexp: FExp =>
             println("U value at: " + fexp.getString())
-            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
-              default = {
-                new ListBuffer[String]
-              }) += fexp.getString())
+//            substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+//              default = {
+//                new ListBuffer[String]
+//              }) += fexp.getString())
             substitutionQueue += Tuple2(currentImportance, fexp.getString())
             getNestedUVals(fexp, currentImportance + 1)
 
@@ -175,15 +175,15 @@ case class T(var l: F, var r: Option[TE]) extends S {
         checkTExtension(currentNode.r, currentImportance)
 
       case _: naturalLog =>
-        substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
-          default = {
-            new ListBuffer[String]
-          }) += currentNode.l.asInstanceOf[naturalLog].getString())
+//        substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+//          default = {
+//            new ListBuffer[String]
+//          }) += currentNode.l.asInstanceOf[naturalLog].getString())
         substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[naturalLog].getString())
-        substitutionMap.put(currentImportance+1, substitutionMap.getOrElse(currentImportance,
-          default = {
-            new ListBuffer[String]
-          }) += currentNode.l.asInstanceOf[naturalLog].innerFuntion.getStringNoParen)
+//        substitutionMap.put(currentImportance+1, substitutionMap.getOrElse(currentImportance,
+//          default = {
+//            new ListBuffer[String]
+//          }) += currentNode.l.asInstanceOf[naturalLog].innerFuntion.getStringNoParen)
         substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[naturalLog].innerFuntion.getStringNoParen)
         getNestedUVals(currentNode.l, currentImportance)
         checkTExtension(currentNode.r, currentImportance)
@@ -191,35 +191,35 @@ case class T(var l: F, var r: Option[TE]) extends S {
       case _: FExp =>
         //add the exponent itself
         println("U value at: " + currentNode.l.asInstanceOf[FExp].getString())
-        substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
-          default = {
-            new ListBuffer[String]
-          }) += currentNode.l.asInstanceOf[FExp].getString())
+//        substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+//          default = {
+//            new ListBuffer[String]
+//          }) += currentNode.l.asInstanceOf[FExp].getString())
         substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].getString())
         if(currentNode.l.asInstanceOf[FExp].l.isInstanceOf[naturalLog] && !currentNode.l.asInstanceOf[FExp].l.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants){
           println("U value at: " + currentNode.l.asInstanceOf[FExp].l.getString())
-          substitutionMap.put(currentImportance+1, substitutionMap.getOrElse(currentImportance,
-            default = {
-              new ListBuffer[String]
-            }) += currentNode.l.asInstanceOf[FExp].l.getString())
+//          substitutionMap.put(currentImportance+1, substitutionMap.getOrElse(currentImportance,
+//            default = {
+//              new ListBuffer[String]
+//            }) += currentNode.l.asInstanceOf[FExp].l.getString())
           substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].l.getString())
         }
 
         if (currentNode.l.asInstanceOf[FExp].r.isInstanceOf[naturalLog] && !currentNode.l.asInstanceOf[FExp].r.asInstanceOf[naturalLog].innerFuntion.checkIfAllConstants) {
           println("U value at: " + currentNode.l.asInstanceOf[FExp].r.getString())
-          substitutionMap.put(currentImportance + 1, substitutionMap.getOrElse(currentImportance,
-            default = {
-              new ListBuffer[String]
-            }) += currentNode.l.asInstanceOf[FExp].r.getString())
+//          substitutionMap.put(currentImportance + 1, substitutionMap.getOrElse(currentImportance,
+//            default = {
+//              new ListBuffer[String]
+//            }) += currentNode.l.asInstanceOf[FExp].r.getString())
           substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].r.getString())
         }
         getNestedUVals(currentNode.l.asInstanceOf[FExp].l,currentImportance)
         if(currentNode.l.asInstanceOf[FExp].r.isInstanceOf[FExp]){
           println("U value at: "+currentNode.l.asInstanceOf[FExp].r.getString())
-          substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
-            default = {
-              new ListBuffer[String]
-            })+=currentNode.l.asInstanceOf[FExp].r.getString())
+//          substitutionMap.put(currentImportance, substitutionMap.getOrElse(currentImportance,
+//            default = {
+//              new ListBuffer[String]
+//            })+=currentNode.l.asInstanceOf[FExp].r.getString())
           substitutionQueue += Tuple2(currentImportance, currentNode.l.asInstanceOf[FExp].r.getString())
         }
         getNestedUVals(currentNode.l.asInstanceOf[FExp].r, currentImportance+1)
@@ -344,7 +344,7 @@ case class T(var l: F, var r: Option[TE]) extends S {
 
   private def runIntegralSubRule(): Unit = {
     getPossibleUValues(this, 0)
-    while(!substitutionQueue.isEmpty){
+    while(substitutionQueue.nonEmpty){
       val subVal = substitutionQueue.dequeue()._2
       var localSubValIsU = true
       println("Sub Val: " + subVal)

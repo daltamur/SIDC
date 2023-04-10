@@ -50,12 +50,14 @@ object MainIntegral {
       x.asInstanceOf[E].compute()
       try {
         strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + "]", 0)
+        if(strResult.contains("null")){
+          println("Could not integrate given expression")
+          return
+        }
         System.out.println(strResult)
       } catch {
         case e: MathLinkException => println(e.getMessage)
       }
-
-      println("Done computing")
     }
     catch {
       case e: Exception =>
@@ -77,17 +79,12 @@ object MainIntegral {
     //^\-?[0-9]+(\.[0-9]+)?|^\-?[0-9]+(\.[0-9]+)? (potential regex for negative numbers)
     //val expr = new grammarClasses.full_expression_parser("x+(92*x^(5.97264*5^(x*5^(x+9)))/2)/-54*(2*-x)/54+7")
     print("Expression? ")
-    var exprVal = scanner.next()
-    if (exprVal == "quit") {
+    val exprVal = scanner.nextLine()
+
+    if (exprVal.equals("quit")) {
       ml.close()
       System.exit(0)
     }
-    var curCharacter = ""
-    while (curCharacter != "\n") {
-      curCharacter = scanner.next()
-      exprVal = exprVal + curCharacter
-    }
-
 
     try {
 
@@ -142,7 +139,6 @@ object MainIntegral {
         case e: MathLinkException => println(e.getMessage)
       }
 
-      println("Done computing")
       MainIntegral.main(args)
     }
     catch {
