@@ -55,7 +55,7 @@ case class FExp(var l: F, var r: F) extends F {
               newCoefficient = "1/" + newExp
               integrationVal = "((" + newCoefficient + ")" + value.n + "^" + newExp + ")"
             }else{
-              println("ERROR! Cannont Integrate an expression of this form...")
+              //println("ERROR! Cannot Integrate an expression of this form...")
             }
           }
         }
@@ -132,7 +132,7 @@ case class FExp(var l: F, var r: F) extends F {
 
     l match {
       case _: Const =>
-        println("Const base val")
+        //println("Const base val")
         r match {
           case _: Var =>
             //exponentRule rule
@@ -158,7 +158,7 @@ case class FExp(var l: F, var r: F) extends F {
         }
 
       case _: Var =>
-        println("Var Base Val")
+        //println("Var Base Val")
         r match {
           case _: Var =>
             //Var^Var situation,
@@ -179,7 +179,7 @@ case class FExp(var l: F, var r: F) extends F {
             if (!r.asInstanceOf[EP].checkIfSingleTerm()) {
               //Var^EP
               //Generalized power rule
-              println("gen power rule")
+              //println("gen power rule")
               generalizedPowerRule(ml)
             }else{
               //var^const
@@ -192,7 +192,7 @@ case class FExp(var l: F, var r: F) extends F {
         }
 
       case _: EP =>
-        println("EP Base Val")
+        //println("EP Base Val")
         //we do generalized power rule for everything except when it is EP^(-Const), that will use generalized power rule
         //later on remember to do checks to make sure the parenthesized expressions are not just single values. For now we will just assume the are not
         r match {
@@ -217,7 +217,7 @@ case class FExp(var l: F, var r: F) extends F {
 
 
       case _: naturalLog =>
-        println("Natural Log Base Val")
+        //println("Natural Log Base Val")
         r match {
           case _: Var =>
             //Var^Var situation,
@@ -238,7 +238,7 @@ case class FExp(var l: F, var r: F) extends F {
             if (!r.asInstanceOf[EP].checkIfSingleTerm()) {
               //Var^EP
               //Generalized power rule
-              println("gen power rule")
+              //println("gen power rule")
               generalizedPowerRule(ml)
             } else {
               //var^const
@@ -257,7 +257,7 @@ case class FExp(var l: F, var r: F) extends F {
     //make the (ln[u(x)]*v(x)) term
     val rightSideTerm = T(naturalLog(EP(T(l, None), None)), Some(TE(T(this.r, None), '*')))
     rightSideTerm.differentiate(ml)
-    println(rightSideTerm.getDifferentiationVal)
+    //println(rightSideTerm.getDifferentiationVal)
     if(rightSideTerm.getDifferentiationVal != null) {
       differntiationVal = "((" + getString() + ")*(" + rightSideTerm.getDifferentiationVal + "))"
     }else{

@@ -24,7 +24,7 @@ object MainIntegral {
   val scanner: Scanner = new Scanner(System.in)
   scanner.useDelimiter("")
 
-  println("Ignore the previous error, everything loaded successfully")
+  //println("Ignore the previous error, everything loaded successfully")
 
   def integrateExpandedFunction(exprVal: String): Unit = {
     try {
@@ -49,7 +49,7 @@ object MainIntegral {
       println(x.getString)
       x.asInstanceOf[E].compute()
       try {
-        strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + "]", 0)
+        strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + " + C]", 0)
         if(strResult.contains("null")){
           println("Could not integrate given expression")
           return
@@ -61,7 +61,7 @@ object MainIntegral {
     }
     catch {
       case e: Exception =>
-        println("Something went wrong: " + e.getMessage + e.printStackTrace())
+        println("Something went wrong: " + e.getMessage)
     }
 
 
@@ -128,7 +128,7 @@ object MainIntegral {
       x.compute()
       println(x.getIntegrationVal)
       try {
-        strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + "]", 0)
+        strResult = ml.evaluateToOutputForm("Simplify[" + x.getIntegrationVal + " + C]", 0)
         if (strResult.contains("null")) {
           println("Couldn't Integrate Simplified Expression! Expanding...")
           integrateExpandedFunction(exprVal)

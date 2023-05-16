@@ -23,8 +23,6 @@ object MainDerivative {
   val scanner: Scanner = new Scanner(System.in)
   scanner.useDelimiter("")
 
-  println("Ignore the previous error, everything loaded successfully")
-
   def main(args: Array[String]): Unit = {
     //grammarClasses.E->grammarClasses.T [grammarClasses.E2]|grammarClasses.T [grammarClasses.E3]
     //grammarClasses.E2-> '+' grammarClasses.E
@@ -37,18 +35,12 @@ object MainDerivative {
     //^\-?[0-9]+(\.[0-9]+)?|^\-?[0-9]+(\.[0-9]+)? (potential regex for negative numbers)
     //val expr = new grammarClasses.full_expression_parser("x+(92*x^(5.97264*5^(x*5^(x+9)))/2)/-54*(2*-x)/54+7")
     print("Expression? ")
-    var exprVal = scanner.next()
+    var exprVal = scanner.nextLine()
     if (exprVal == "quit") {
       ml.close()
       System.exit(0)
     }
     var curCharacter = ""
-    while (curCharacter != "\n") {
-      curCharacter = scanner.next()
-      exprVal = exprVal + curCharacter
-    }
-
-
     try {
 
       var strResult = ""
